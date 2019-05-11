@@ -1,0 +1,9 @@
+.ghc.environment.*
+.stack-work/
+bin
+dist
+dist-newstyle
+*.a
+*.o
+*.hi
+*~
