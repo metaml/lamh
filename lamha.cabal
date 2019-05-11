@@ -3,13 +3,15 @@ name:                 lamha
 version:              0.1.0.0
 license:              BSD-3-Clause
 license-file:         LICENSE
-author:               Michael Lee
+author:               delivery group | earnestresearch.com
 maintainer:           mlee@earnestresearch.com
 category:             aws
 extra-source-files:   CHANGELOG.md
 
 library
   exposed-modules:    Aws.Lambda
+                    , Aws.Event.Kinesis
+                    , Aws.Event.S3
                     , Http.Client
   hs-source-dirs:     src
   ghc-options:        -O2 -flate-specialise -fspecialise-aggressively
@@ -33,13 +35,16 @@ library
                     , TypeFamilies
   build-depends:      base ^>=4.12.0.0
                     , aeson
+                    , http-client
                     , lens
                     , polysemy
                     , polysemy-plugin
                     , req
+                    , servant
                     , servant-client
                     , text
                     , text-conversions
+                    , unordered-containers
 
 executable lamha
   main-is:            lamha.hs
