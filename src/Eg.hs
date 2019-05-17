@@ -1,4 +1,5 @@
-module Http where
+module Eg where
+
 import Data.Aeson
 import Data.Proxy
 import Data.Text
@@ -12,6 +13,7 @@ awsUrl :: BaseUrl
 awsUrl = BaseUrl Http "hackage.haskell.org" 80 ""
 
 -- servant
+
 newtype Package = Package { packageName :: Text }
   deriving (Eq, Generic, Show)
   deriving anyclass (FromJSON)
@@ -32,6 +34,7 @@ get' url = do
     Right ps -> return ps
 
 -- polysemy
+
 data Http m a where
   Get :: Http m [Package]
 

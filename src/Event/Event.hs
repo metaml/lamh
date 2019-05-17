@@ -12,19 +12,23 @@ import Event.ApiGatewayOutput
 import Event.S3
 import Event.Sns
 import GHC.Generics
+import Servant.API (ToHttpApiData(..))
 
 newtype EventId = EventId Text
   deriving (Eq, FromJSON, ToJSON, Generic, Show)
   deriving newtype (IsString, ToText)
 
-data AwsEvent a = AwsEvent { _eventId :: EventId
-                           , _eventBody :: Either Error Event
-                           } deriving (Eq, Generic, Show)
+instance ToHttpApiData EventId where
+  toUrlPiece = toText
 
-instance (ToJSON a) => ToJSON (AwsEvent a) where
+data AwsEvent = AwsEvent { _eventId :: EventId
+                         , _eventBody :: Either Error Event
+                         } deriving (Eq, Generic, Show)
+
+instance ToJSON AwsEvent where
   toJSON = genericToJSON defaultOptions { fieldLabelModifier = rekey }
 
-instance (FromJSON a) => FromJSON (AwsEvent a) where
+instance FromJSON AwsEvent where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey }
 
 rekey :: String -> String
