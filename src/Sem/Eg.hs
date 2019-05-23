@@ -1,6 +1,7 @@
 {-# language FlexibleInstances, MultiParamTypeClasses #-}
 module Sem.Eg where
 
+import Prelude as P
 import Data.Aeson
 import Data.Proxy
 import Data.Text hiding (take)
@@ -8,10 +9,12 @@ import Data.Typeable
 import GHC.Generics
 import Network.HTTP.Client (newManager, defaultManagerSettings)
 import Polysemy
+import Sem.Tty
 import Servant.API
 import Servant.API.ContentTypes (eitherDecodeLenient)
 import Servant.Client
 import Network.HTTP.Media ((//))
+import qualified Sem.Tty as Tty
 
 -- hackage data-type models
 data User = User { username :: Text
@@ -34,6 +37,9 @@ data Hackage m a where
 
 makeSem ''Hackage
 
+printPs :: Members '[Tty, Hackage] r => Sem r ()
+printPs = getPackages >>= Tty.print
+
 runHackageIO :: Member (Lift IO) r => Sem (Hackage ': r) a -> Sem r a
 runHackageIO = interpret $ \case
   GetPackages -> sendM getPackages'
@@ -44,6 +50,14 @@ packagesIO = runHackageIO getPackages
 
 usersIO :: Sem '[Lift IO] [User]
 usersIO = runHackageIO getUsers
+
+-- runM printPsIO
+printPsIO :: Sem '[Lift IO] ()
+printPsIO = runHackageIO . runTtyIO $ printPs
+
+-- runM printPsIO'
+printPsIO' :: Sem '[Lift IO] ()
+printPsIO' = runTtyIO . runHackageIO $ printPs
 
 -- servant-client
 -- NB bug: hackge.haskell.org doesn't recognize servant's JSON accept header,
@@ -74,7 +88,7 @@ getPackages' = do
   mgr <- newManager defaultManagerSettings
   let env = mkClientEnv mgr hackageUrl
   runClientM packages env >>= \case
-    Left err -> print (take 256 $ show err) >> return []
+    Left err -> P.print (take 256 $ show err) >> return []
     Right ps -> return ps
 
 getUsers' :: IO [User]
@@ -82,5 +96,5 @@ getUsers' = do
   mgr <- newManager defaultManagerSettings
   let env = mkClientEnv mgr hackageUrl
   runClientM users env >>= \case
-    Left err -> print (take 256 $ show err) >> return []
+    Left err -> P.print (take 256 $ show err) >> return []
     Right us -> return us
