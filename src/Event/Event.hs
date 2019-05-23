@@ -1,21 +1,16 @@
-{-# language StandaloneDeriving #-}
 module Event.Event where
 
 import Control.Lens
 import Data.Aeson
-import Data.Aeson.Text
 import Data.String (IsString)
 import Data.Text hiding (drop)
 import Data.Text.Conversions
-import Event.ApiGatewayInput
-import Event.ApiGatewayOutput
-import Event.S3
-import Event.Sns
 import GHC.Generics
 import Servant.API (ToHttpApiData(..))
 
 newtype EventId = EventId Text
-  deriving (Eq, FromJSON, ToJSON, Generic, Show)
+  deriving (Eq, Generic, Show)
+  deriving anyclass (FromJSON, ToJSON)
   deriving newtype (IsString, ToText)
 
 instance ToHttpApiData EventId where

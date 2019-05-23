@@ -1,8 +1,5 @@
-module Event.Sns ( MessageAttribute
-                 , Sns
-                 , SnsEvent
-                 , Record
-                 ) where
+module Event.Sns where
+
 import Control.Lens
 import Data.Aeson
 import Data.HashMap.Strict

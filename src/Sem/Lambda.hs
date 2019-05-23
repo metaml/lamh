@@ -1,18 +1,10 @@
 module Sem.Lambda where
 
-import Control.Lens
-import Data.Aeson
-import Data.Aeson.Text
-import Data.String (IsString)
-import Data.Text hiding (drop)
-import Data.Text.Conversions
 import Event.Event
-import GHC.Generics
 import Network.HTTP.Client (Manager)
 import Polysemy
 import Polysemy.Reader
 import Servant.Client
-import Sem.Tty
 import qualified Network.Aws as Aws
 
 type Hostname = String

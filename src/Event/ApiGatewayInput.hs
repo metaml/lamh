@@ -1,5 +1,5 @@
-module Event.ApiGatewayInput ( ApiGatewayInput
-                             ) where
+module Event.ApiGatewayInput where
+
 import Control.Lens
 import Data.Aeson
 import Data.HashMap.Strict

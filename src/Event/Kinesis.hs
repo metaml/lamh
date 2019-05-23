@@ -1,7 +1,5 @@
-module Event.Kinesis ( Kinesis
-                     , KinesisEvent
-                     , Record
-                     ) where
+module Event.Kinesis where
+
 import Control.Lens
 import Data.Aeson
 import Data.Text (Text)

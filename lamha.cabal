@@ -15,7 +15,6 @@ library
                     , Event.Kinesis
                     , Event.S3
                     , Event.Sns
-                    , Lambda
                     , Network.Aws
                     , Sem.Eg
                     , Sem.Lambda

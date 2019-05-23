@@ -1,8 +1,5 @@
-module Event.S3 ( Bucket
-                , S3
-                , S3Object
-                , Record
-                ) where
+module Event.S3 where
+
 import Control.Lens
 import Data.Aeson
 import Data.HashMap.Strict
