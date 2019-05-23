@@ -6,6 +6,7 @@ import Data.String (IsString)
 import Data.Text hiding (drop)
 import Data.Text.Conversions
 import GHC.Generics
+import Internal.EventUtil (rekey)
 import Servant.API (ToHttpApiData(..))
 
 newtype EventId = EventId Text
@@ -25,10 +26,6 @@ instance ToJSON AwsEvent where
 
 instance FromJSON AwsEvent where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey }
-
-rekey :: String -> String
-rekey "_eventId" = "eventID"
-rekey k = drop 1 k
 
 data Event = ApiGatewayInput | ApiGatewayOutput | S3 | Sns
   deriving (Eq, FromJSON, ToJSON, Generic, Show)

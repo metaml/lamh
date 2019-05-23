@@ -5,7 +5,7 @@ import Data.Aeson
 import Data.HashMap.Strict
 import Data.Text hiding (drop)
 import GHC.Generics
-import qualified Data.Char as C
+import Internal.SnsUtil
 
 data MessageAttribute = MessageAttribute { _attributeType :: Text
                                          , _value :: Text
@@ -56,15 +56,6 @@ instance FromJSON SnsEvent where
 
 instance ToJSON SnsEvent where
   toJSON = genericToJSON defaultOptions { fieldLabelModifier = rekey }
-
-rekey :: String -> String
-rekey "_snsType" = "Type"
-rekey "_attributeType" = "Type"
-rekey v  = capitalize . drop 1 $ v
-
-capitalize :: String -> String
-capitalize "" = ""
-capitalize (x:xs) = C.toUpper x : xs
 
 makeLenses ''MessageAttribute
 makeLenses ''Sns

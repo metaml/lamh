@@ -1,4 +1,6 @@
 module Main where
 
+import Lambda
+
 main :: IO ()
-main = putStrLn "Hello, World!"
+main = echoEventIO

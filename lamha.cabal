@@ -15,6 +15,11 @@ library
                     , Event.Kinesis
                     , Event.S3
                     , Event.Sns
+                    , Lambda
+                    , Internal.EventUtil
+                    , Internal.KinesisUtil
+                    , Internal.S3Util
+                    , Internal.SnsUtil
                     , Network.Aws
                     , Sem.Eg
                     , Sem.Lambda

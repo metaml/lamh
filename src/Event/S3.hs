@@ -5,6 +5,7 @@ import Data.Aeson
 import Data.HashMap.Strict
 import Data.Text hiding (drop)
 import GHC.Generics
+import Internal.S3Util (rekey)
 
 data S3Object = S3Object { _key :: Text
                          , _size :: Maybe Integer
@@ -41,10 +42,6 @@ instance ToJSON S3 where
 
 instance FromJSON S3 where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey }
-
-rekey :: String -> String
-rekey "_s3object" = "object"
-rekey k = drop 1 k
 
 data Record = Record { _eventVersion :: Text
                      , _eventSource :: Text

@@ -4,6 +4,7 @@ import Control.Lens
 import Data.Aeson
 import Data.Text (Text)
 import GHC.Generics
+import Internal.KinesisUtil (rekey, rekey', rekey'')
 
 data Kinesis = Kinesis { _partitionKey :: Text
                        , _data' :: Text
@@ -16,10 +17,6 @@ instance ToJSON Kinesis where
 
 instance FromJSON Kinesis where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey }
-
-rekey :: String -> String
-rekey "_data'" = "data"
-rekey k = drop 1 k
 
 data Record = Record { _eventId :: Text
                      , _eventVersion :: Text
@@ -37,10 +34,6 @@ instance ToJSON Record where
 instance FromJSON Record where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey'' }
 
-rekey'' :: String -> String
-rekey'' "_eventId" = "eventID"
-rekey'' k          = drop 1 k
-
 newtype KinesisEvent = KinesisEvent { _records :: [Record] }
   deriving (Eq, Generic, Show)
 
@@ -49,10 +42,6 @@ instance ToJSON KinesisEvent where
 
 instance FromJSON KinesisEvent where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey' }
-
-rekey' :: String -> String
-rekey' "_records" = "Records"
-rekey' k          = drop 1 k
 
 makeLenses ''Kinesis
 makeLenses ''Record
