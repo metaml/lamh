@@ -9,12 +9,10 @@ import Data.Typeable
 import GHC.Generics
 import Network.HTTP.Client (newManager, defaultManagerSettings)
 import Polysemy
-import Sem.Tty
 import Servant.API
 import Servant.API.ContentTypes (eitherDecodeLenient)
 import Servant.Client
 import Network.HTTP.Media ((//))
-import qualified Sem.Tty as Tty
 
 -- hackage data-type models
 data User = User { username :: Text
@@ -28,36 +26,40 @@ newtype Package = Package { packageName :: Text }
   deriving anyclass (FromJSON, ToJSON)
 
 -- polysemy
-hackageUrl :: BaseUrl
-hackageUrl = BaseUrl Http "hackage.haskell.org" 80 ""
-
 data Hackage m a where
-  GetPackages :: Hackage m [Package]
+  GetPkgs :: Hackage m [Package]
   GetUsers :: Hackage m [User]
 
-makeSem ''Hackage
+data Tty m a where
+  Put :: Show a => a -> Tty m ()
 
-printPs :: Members '[Tty, Hackage] r => Sem r ()
-printPs = getPackages >>= Tty.print
+makeSem ''Hackage
+makeSem ''Tty
+
+putPkgs :: Members '[Tty, Hackage] r => Sem r ()
+putPkgs = getPkgs >>= put
+
+runTtyIO :: Member (Lift IO) r => Sem (Tty ': r) a -> Sem r a
+runTtyIO = interpret $ \case
+  Put a -> sendM $ P.print a
 
 runHackageIO :: Member (Lift IO) r => Sem (Hackage ': r) a -> Sem r a
 runHackageIO = interpret $ \case
-  GetPackages -> sendM getPackages'
+  GetPkgs -> sendM getPkgs'
   GetUsers -> sendM getUsers'
 
-packagesIO :: Sem '[Lift IO] [Package]
-packagesIO = runHackageIO getPackages
+putPkgsIO :: Sem '[Lift IO] ()
+putPkgsIO = runHackageIO . runTtyIO $ putPkgs
+
+putPkgsIO' :: Sem '[Lift IO] ()
+putPkgsIO' = runTtyIO . runHackageIO $ putPkgs
+
+-- runM <x>IO
+pkgsIO :: Sem '[Lift IO] [Package]
+pkgsIO = runHackageIO getPkgs
 
 usersIO :: Sem '[Lift IO] [User]
 usersIO = runHackageIO getUsers
-
--- runM printPsIO
-printPsIO :: Sem '[Lift IO] ()
-printPsIO = runHackageIO . runTtyIO $ printPs
-
--- runM printPsIO'
-printPsIO' :: Sem '[Lift IO] ()
-printPsIO' = runTtyIO . runHackageIO $ printPs
 
 -- servant-client
 -- NB bug: hackge.haskell.org doesn't recognize servant's JSON accept header,
@@ -79,16 +81,19 @@ type HackageApi = "packages" :> Get '[JSON'] [Package]
 hackageApi :: Proxy HackageApi
 hackageApi = Proxy
 
-packages :: ClientM [Package]
+pkgs :: ClientM [Package]
 users :: ClientM [User]
-packages :<|> users = client hackageApi
+pkgs :<|> users = client hackageApi
 
-getPackages' :: IO [Package]
-getPackages' = do
+hackageUrl :: BaseUrl
+hackageUrl = BaseUrl Http "hackage.haskell.org" 80 ""
+
+getPkgs' :: IO [Package]
+getPkgs' = do
   mgr <- newManager defaultManagerSettings
   let env = mkClientEnv mgr hackageUrl
-  runClientM packages env >>= \case
-    Left err -> P.print (take 256 $ show err) >> return []
+  runClientM pkgs env >>= \case
+    Left err -> P.print err >> return []
     Right ps -> return ps
 
 getUsers' :: IO [User]
@@ -96,5 +101,5 @@ getUsers' = do
   mgr <- newManager defaultManagerSettings
   let env = mkClientEnv mgr hackageUrl
   runClientM users env >>= \case
-    Left err -> P.print (take 256 $ show err) >> return []
+    Left err -> P.print err >> return []
     Right us -> return us
