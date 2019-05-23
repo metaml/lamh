@@ -14,7 +14,7 @@ dev: clean ## build continuously
 		 else if ($$0 ~ /^.*error:$$/) { print "$(MAG)" "- " $$0 "$(NON)" } \
                  else { print }; }'
 
-build: clean lint ## build
+build: clean # lint (breaks on multiple readers) ## build
 	cabal v2-build --jobs=8
 
 test: ## test
