@@ -1,10 +1,13 @@
 .DEFAULT_GOAL = help
 
 export SHELL = /bin/bash
-export PATH = ${HOME}/.cabal/bin:${HOME}/.ghcup/bin:/usr/local/bin:/usr/bin:/bin
+export PATH = .:${HOME}/.cabal/bin:${HOME}/.ghcup/bin:/usr/local/bin:/usr/bin:/bin
 
 BIN ?= lamha
 VERSION ?= 1
+
+build-linux: ## build linux binary
+	docker run --rm --interactive --tty --volume ${PWD}:/proj --workdir /proj ghc make build
 
 dev: clean ## build continuously
 	@(echo building... && sleep 2 && touch lamha.cabal) &
@@ -15,22 +18,31 @@ dev: clean ## build continuously
                  else { print }; }'
 
 build: clean # lint (breaks on multiple readers) ## build
-	cabal v2-build --jobs=8
+	cabal new-build --jobs=8
 
 test: ## test
-	cabal v2-test
+	cabal new-test
 
 lint: ## lint
 	hlint app src
 
 clean: ## clean
-	cabal v2-clean
+	cabal new-clean
 
 run: ## run main, default: BIN=baka
-	cabal v2-run ${BIN}
+	cabal new-run ${BIN}
 
 repl: ## repl
-	cabal v2-repl
+	cabal new-repl
+
+install: clean ## install lamha
+	[ "$(shell uname -s)" = "Linux" ] || ( echo "error: must be linux"; exit 1 )
+	mkdir -p deploy/bootstrap \
+	&& cabal new-configure --prefix=deploy/bootstrap --disable-executable-dynamic \
+	&& cabal new-build \
+	&& cabal new-install --overwrite-policy=always exe:lamha
+	cp /root/.cabal/bin/lamha deploy/bootstrap
+	strip deploy/bootstrap/lamha
 
 # @todo: hook in docker to produce static linux binary
 deploy-dev: ## deploy to s3 bucket in development
@@ -49,7 +61,7 @@ init: ## initialize project
 	${MAKE} -f etc/init.mk init
 
 update: ## update project
-	${MAKE} -f etc/init.mk cabal-update
+	cabal new-update
 
 # colors
 NON = \033[0m

@@ -1,6 +1,7 @@
 .ghc.environment.*
 .stack-work/
 bin
+deploy
 dist
 dist-newstyle
 *.a
