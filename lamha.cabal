@@ -67,7 +67,9 @@ executable lamha
   main-is:          lamha.hs
   hs-source-dirs:   app
   ghc-options:      -Wall -O2 -flate-specialise -fspecialise-aggressively
-  ld-options:       -static
+  when:
+    - condition:    os(linux)
+      ld-options:     -static
   default-language: Haskell2010
   build-depends:    base ^>=4.12.0.0
                   , lamha

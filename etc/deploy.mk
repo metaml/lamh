@@ -17,9 +17,7 @@ s3-sync-prod: ## copy zipped lambda function to s3 prod
 	aws s3 cp lambda/s3-lambda-${VERSION}.zip s3://earnest-lambda-code-us-east-1/s3-lambda/
 
 ## ${BIN} is dir and executable, e.g.: s3-lambda/s3-lambda
-zip: zip-clean pull-stack-build  ## create lambda zip package, e.g.: make zip VERSION=<number>
-	stack clean --docker
-	stack build --docker
+zip: zip-clean  ## create lambda zip package, e.g.: make zip VERSION=<number>
 	@echo $(LINUX_BIN)
 	cp $(LINUX_BIN)/s3-lambda lambda/bootstrap
 	( cd lambda && zip s3-lambda-${VERSION}.zip bootstrap && rm -f bootstrap )

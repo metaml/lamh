@@ -6,9 +6,6 @@ export PATH = .:${HOME}/.cabal/bin:${HOME}/.ghcup/bin:/usr/local/bin:/usr/bin:/b
 BIN ?= lamha
 VERSION ?= 1
 
-build-linux: ## build linux binary
-	docker run --rm --interactive --tty --volume ${PWD}:/proj --workdir /proj ghc make build
-
 dev: clean ## build continuously
 	@(echo building... && sleep 2 && touch lamha.cabal) &
 	@fswatcher --path . --include "\.hs$$|\.cabal$$" --throttle 31 cabal v2-build 2>&1 \
@@ -29,26 +26,17 @@ lint: ## lint
 clean: ## clean
 	cabal new-clean
 
-run: ## run main, default: BIN=baka
+run: ## run main, default: BIN=lamha
 	cabal new-run ${BIN}
 
 repl: ## repl
 	cabal new-repl
 
-install: clean ## install lamha
-	[ "$(shell uname -s)" = "Linux" ] || ( echo "error: must be linux"; exit 1 )
-	mkdir -p deploy/bootstrap \
-	&& cabal new-configure --prefix=deploy/bootstrap --disable-executable-dynamic \
-	&& cabal new-build \
-	&& cabal new-install --overwrite-policy=always exe:lamha
-	cp /root/.cabal/bin/lamha deploy/bootstrap
-	strip deploy/bootstrap/lamha
-
 # @todo: hook in docker to produce static linux binary
-deploy-dev: ## deploy to s3 bucket in development
+deploy-dev: build-linux ## deploy to s3 bucket in development
 	echo ${MAKE} -f etc/deploy.mk zip-sync-dev VERSION=${VERSION}
 
-deploy-prod: ## deploy to s3 bucket in production
+deploy-prod: build-linux ## deploy to s3 bucket in production
 	echo ${MAKE} -f etc/deploy.mk zip-sync-prod VERSION=${VERSION}
 
 help: ## help
@@ -62,6 +50,26 @@ init: ## initialize project
 
 update: ## update project
 	cabal new-update
+
+lambda: ## build linux binary
+	docker run --rm --interactive --tty --volume ${PWD}:/proj --volume ${PWD}/deploy:/root --workdir /proj ghc make zip
+
+update-docker: ## update project in docker
+	docker run --rm --interactive --tty --volume ${PWD}:/proj --volume ${PWD}/deploy:/root --workdir /proj ghc make init-docker
+
+init-docker: ## initialize project
+	${MAKE} -f etc/docker.mk init
+
+zip: clean ## build lamha
+	[ "$(shell uname -s)" = "Linux" ] || ( echo "error: must be linux"; exit 1 )
+	mkdir -p deploy \
+	&& rm -rf deploy/* \
+	&& cabal new-configure --prefix=deploy/bootstrap --disable-executable-dynamic \
+	&& cabal new-build \
+	&& cabal new-install --overwrite-policy=always exe:lamha
+	cp /root/.cabal/bin/lamha deploy/bootstrap
+	strip deploy/bootstrap
+	cd deploy && zip s3-lambda-${VERSION}.zip bootstrap && rm -f bootstrap
 
 # colors
 NON = \033[0m
