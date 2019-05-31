@@ -1,34 +1,41 @@
 .DEFAULT_GOAL = help
 
+PROJECT = $(shell dirname ${PWD})
 S3_BIN = s3-lambda
-STS_S3_BIN = sts-s3-lambda
-VERSION ?= 1
-LINUX_BIN = $(shell stack --docker path --local-install-root)/bin
+VERSION ?= $(shell date +%s)
 
-zip-sync-dev: zip s3-sync-dev ## zip and sync zipped lambda to s3 dev, require VERSION=<number>
+deploy-dev: ## deploy to s3 bucket in development
+deploy-dev: URL = s3://earnest-lambda-code-dev-us-east-1/s3-lambda/
+deploy-dev: VER := $(VERSION)
+deploy-dev: export AWS_PROFILE = development
+deploy-dev: clean lambda s3-cp
 
-zip-sync-prod: zip s3-sync-prod  ## zip and sync zipped lambda to s3 prod, require VERSION=<number>
+deploy-prod: ## deploy to s3 bucket in production
+deploy-prod: URL = s3://earnest-lambda-code-us-east-1/s3-lambda/
+deploy-prod: export AWS_PROFILE = production
+deploy-prod: clean lambda
 
-s3-sync-dev: export AWS_PROFILE = development
-	aws s3 cp lambda/s3-lambda-${VERSION}.zip s3://earnest-lambda-code-dev-us-east-1/s3-lambda/
+lambda: ## zip lambda (linux-binary) in <lamha>/deploy
+	docker run --rm --interactive --tty --volume $(PROJECT):/proj --volume $(PROJECT)/deploy:/root --workdir /proj ghc make zip
 
-s3-sync-prod: export AWS_PROFILE = production
-s3-sync-prod: ## copy zipped lambda function to s3 prod
-	aws s3 cp lambda/s3-lambda-${VERSION}.zip s3://earnest-lambda-code-us-east-1/s3-lambda/
+zip: clean ## build and zip lambda function: lamha
+	[ "$(shell uname -s)" = "Linux" ] || ( echo "error: must be linux" && exit 1 )
+	cabal new-configure --prefix=deploy/bootstrap --disable-executable-dynamic
+	cabal new-build
+	cabal new-install --overwrite-policy=always exe:lamha
+	strip /root/.cabal/bin/lamha
+	cp /root/.cabal/bin/lamha deploy/bootstrap
+	cd deploy && zip s3-lambda.zip bootstrap && rm -f bootstrap
 
-## ${BIN} is dir and executable, e.g.: s3-lambda/s3-lambda
-zip: zip-clean  ## create lambda zip package, e.g.: make zip VERSION=<number>
-	@echo $(LINUX_BIN)
-	cp $(LINUX_BIN)/s3-lambda lambda/bootstrap
-	( cd lambda && zip s3-lambda-${VERSION}.zip bootstrap && rm -f bootstrap )
-	cp $(LINUX_BIN)/sts-s3-lambda lambda/bootstrap
-	( cd lambda && zip sts-s3-lambda-${VERSION}.zip bootstrap && rm -f bootstrap )
+s3-cp: ## copy zip to s3
+	cd ../deploy && mv s3-lambda.zip s3-lambda-${VER}.zip
+	cd .. && aws s3 cp deploy/s3-lambda-${VER}.zip $(URL)
 
-zip-clean: ## create build dir or empty it
-	mkdir -p lambda && rm -rf ./lambda/*
+clean: ## create build dir or empty it
+	( cd .. && mkdir -p deploy && rm -rf deploy/* )
 
-pull-stack-build: ## pull stack-build docker image to build for ubuntu
-	stack docker pull
+update-docker: ## update project in docker
+	docker run --rm --interactive --tty --volume $(PROJECT):/proj --volume $(PROJECT)/deploy:/root --workdir /proj ghc make init-docker
 
 help: ## help
 	@grep -E '^[a-zA-Z00-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \

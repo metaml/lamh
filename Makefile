@@ -32,13 +32,6 @@ run: ## run main, default: BIN=lamha
 repl: ## repl
 	cabal new-repl
 
-# @todo: hook in docker to produce static linux binary
-deploy-dev: build-linux ## deploy to s3 bucket in development
-	echo ${MAKE} -f etc/deploy.mk zip-sync-dev VERSION=${VERSION}
-
-deploy-prod: build-linux ## deploy to s3 bucket in production
-	echo ${MAKE} -f etc/deploy.mk zip-sync-prod VERSION=${VERSION}
-
 help: ## help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	 | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -51,25 +44,14 @@ init: ## initialize project
 update: ## update project
 	cabal new-update
 
-lambda: ## build linux binary
-	docker run --rm --interactive --tty --volume ${PWD}:/proj --volume ${PWD}/deploy:/root --workdir /proj ghc make zip
+deploy-dev: ## deploy to s3 bucket in development
+	cd etc && ${MAKE} -f deploy.mk $@
 
-update-docker: ## update project in docker
-	docker run --rm --interactive --tty --volume ${PWD}:/proj --volume ${PWD}/deploy:/root --workdir /proj ghc make init-docker
+deploy-prod: ## deploy to s3 bucket in production
+	cd etc && ${MAKE} -f deploy.mk $@
 
-init-docker: ## initialize project
-	${MAKE} -f etc/docker.mk init
-
-zip: clean ## build lamha
-	[ "$(shell uname -s)" = "Linux" ] || ( echo "error: must be linux"; exit 1 )
-	mkdir -p deploy \
-	&& rm -rf deploy/* \
-	&& cabal new-configure --prefix=deploy/bootstrap --disable-executable-dynamic \
-	&& cabal new-build \
-	&& cabal new-install --overwrite-policy=always exe:lamha
-	cp /root/.cabal/bin/lamha deploy/bootstrap
-	strip deploy/bootstrap
-	cd deploy && zip s3-lambda-${VERSION}.zip bootstrap && rm -f bootstrap
+zip: ## build and zip lambda function
+	${MAKE} -f etc/deploy.mk $@
 
 # colors
 NON = \033[0m

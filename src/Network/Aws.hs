@@ -1,8 +1,6 @@
 module Network.Aws where
 
 import Data.Proxy
-import Data.Text
-import Data.Text.Conversions
 import Event.Event
 import Network.HTTP.Client (Manager)
 import Servant.API
@@ -36,28 +34,3 @@ ackError' mgr url eid = runClientM (ackError eid) (mkClientEnv mgr url)
 
 initError' :: Manager -> BaseUrl -> IO (Either ClientError Error)
 initError' mgr url = runClientM initError (mkClientEnv mgr url)
-
--- urls
-
-runtimeApiEnv :: String
-runtimeApiEnv = "AWS_LAMBDA_RUNTIME_API"
-
-runtimePath :: String
-runtimePath = "/2018-06-01/runtime"
-
-type Hostname = String
-
-getEventUrl :: Hostname -> BaseUrl
-getEventUrl h = BaseUrl Http h 80 (runtimePath <>  "/invocation/next")
-
-ackEventUrl :: Hostname -> EventId -> BaseUrl
-ackEventUrl h id' = BaseUrl Http h 80 (runtimePath <> "/invocation/" <> eventId' id' <> "/response")
-
-ackErrorUrl :: Hostname -> EventId -> BaseUrl
-ackErrorUrl h id' = BaseUrl Http h 80 (runtimePath <> "/invocation/" <> eventId' id' <> "/error")
-
-initErrorUrl :: Hostname -> BaseUrl
-initErrorUrl h = BaseUrl Http h 80 (runtimePath <> "/init/error")
-
-eventId' :: EventId -> String
-eventId' = unpack . toText
