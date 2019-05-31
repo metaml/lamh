@@ -1,6 +1,7 @@
 .ghc.environment.*
 .stack-work/
 bin
+cabal.project.loca*
 deploy
 dist
 dist-newstyle
