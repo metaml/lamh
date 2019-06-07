@@ -8,22 +8,22 @@ import Servant.Client
 
 -- servant
 
-type Api = "2018-06-01" :> "runtime" :> "invocation" :> "next" :> Get '[JSON] AwsEvent
-           :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "response" :> Post '[JSON] Event
-           :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "error" :> Post '[JSON] Error
-           :<|> "2018-06-01" :> "runtime" :> "invocation" :> "init" :> "error" :> Post '[JSON] Error
+type Api = "2018-06-01" :> "runtime" :> "invocation" :> "next" :> Get '[JSON] [Event]
+      :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "response" :> Post '[JSON] Event
+      :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "error" :> Post '[JSON] Error
+      :<|> "2018-06-01" :> "runtime" :> "invocation" :> "init" :> "error" :> Post '[JSON] Error
 
 api :: Proxy Api
 api = Proxy
 
-getEvent :: ClientM AwsEvent
+getEvent :: ClientM [Event]
 ackEvent :: EventId -> ClientM Event
 ackError :: EventId -> ClientM Error
 initError :: ClientM Error
 
 getEvent :<|> ackEvent :<|> ackError :<|> initError = client api
 
-getEvent' :: Manager -> BaseUrl -> IO (Either ClientError AwsEvent)
+getEvent' :: Manager -> BaseUrl -> IO (Either ClientError [Event])
 getEvent' mgr url = runClientM getEvent (mkClientEnv mgr url)
 
 ackEvent' :: Manager -> BaseUrl -> EventId -> IO (Either ClientError Event)

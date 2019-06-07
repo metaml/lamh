@@ -20,12 +20,14 @@ instance ToHttpApiData EventId where
 data AwsEvent = AwsEvent { _eventId :: EventId
                          , _eventBody :: Either Error Event
                          } deriving (Eq, Generic, Show)
-
 instance ToJSON AwsEvent where
   toJSON = genericToJSON defaultOptions { fieldLabelModifier = rekey }
 
 instance FromJSON AwsEvent where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey }
+
+data Records = Records [Event]
+  deriving (Eq, FromJSON, ToJSON, Generic, Show)
 
 data Event = ApiGatewayInput | ApiGatewayOutput | S3 | Sns
   deriving (Eq, FromJSON, ToJSON, Generic, Show)
