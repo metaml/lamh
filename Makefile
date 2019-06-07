@@ -16,8 +16,8 @@ dev: clean ## build continuously
 
 dev-ghcid: clean ## build continuously using ghcid
 	@ghcid --command="cabal new-repl -fwarn-unused-binds -fwarn-unused-imports -fwarn-orphans" \
-		--reload=app/lamha.hs \
-		--restart=lamha.cabal \
+	       --reload=app/lamha.hs \
+	       --restart=lamha.cabal \
 	| source-highlight --src-lang=haskell --out-format=esc
 
 build: clean # lint (breaks on multiple readers) ## build
@@ -50,10 +50,10 @@ init: ## initialize project
 update: ## update project depedencies
 	${MAKE} -f etc/init.mk install-pkgs
 
-deploy-dev: ## deploy to s3 bucket in development
+lambda-dev: ## deploy to s3 bucket in development
 	cd etc && ${MAKE} -f deploy.mk $@
 
-deploy-prod: ## deploy to s3 bucket in production
+lambda-prod: ## deploy to s3 bucket in production
 	cd etc && ${MAKE} -f deploy.mk $@
 
 zip: ## build and zip lambda function

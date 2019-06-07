@@ -1,19 +1,21 @@
 .DEFAULT_GOAL = help
 
 PROJECT = $(shell dirname ${PWD})
-S3_BIN = s3-lambda
-VERSION ?= $(shell date +%s)
+VERSION := polysemy-$(shell date +%s)
 
-deploy-dev: ## deploy to s3 bucket in development
-deploy-dev: URL = s3://earnest-lambda-code-dev-us-east-1/s3-lambda/
-deploy-dev: VER := $(VERSION)
-deploy-dev: export AWS_PROFILE = development
-deploy-dev: clean lambda s3-cp
+AWS_CFN_STACKS ?= ${HOME}/proj/aws-cfn-stacks
 
-deploy-prod: ## deploy to s3 bucket in production
-deploy-prod: URL = s3://earnest-lambda-code-us-east-1/s3-lambda/
-deploy-prod: export AWS_PROFILE = production
-deploy-prod: clean lambda
+lambda-dev: ## deploy to s3 bucket in development
+lambda-dev: URL = s3://earnest-lambda-code-dev-us-east-1/s3-lambda/
+lambda-dev: export AWS_PROFILE = development
+lambda-dev: clean lambda s3-cp
+	$(AWS_CFN_STACKS)/bin/deli-cf update aws-cfn-app-deli-s3-lambda --param version:$(VERSION)
+
+lambda-prod: ## deploy to s3 bucket in production
+lambda-prod: URL = s3://earnest-lambda-code-us-east-1/s3-lambda/
+lambda-prod: export AWS_PROFILE = production
+lambda-prod: clean lambda s3-cp
+	echo noop: $(AWS_CFN_STACKS)/bin/deli-cf update aws-cfn-app-deli-s3-lambda --param version:$(VERSION)
 
 lambda: ## zip lambda (linux-binary) in <lamha>/deploy
 	docker run --rm --interactive --tty --volume $(PROJECT):/proj --volume $(PROJECT)/deploy:/root --workdir /proj ghc make zip
@@ -28,8 +30,8 @@ zip: clean ## build and zip lambda function: lamha
 	cd deploy && zip s3-lambda.zip bootstrap && rm -f bootstrap
 
 s3-cp: ## copy zip to s3
-	cd ../deploy && mv s3-lambda.zip s3-lambda-${VER}.zip
-	cd .. && aws s3 cp deploy/s3-lambda-${VER}.zip $(URL)
+	cd ../deploy && mv s3-lambda.zip s3-lambda-${VERSION}.zip
+	cd .. && aws s3 cp deploy/s3-lambda-${VERSION}.zip $(URL)
 
 clean: ## create build dir or empty it
 	( cd .. && mkdir -p deploy && rm -rf deploy/* )

@@ -24,9 +24,9 @@ echoEventIO = do
 
 runEchoEventIO :: Sem '[Reader BaseUrl, Reader Manager, Log String, Lift IO] ()
 runEchoEventIO = do
-  e <- (runError @SomeException) . runLambdaIO $ echoEvent
-  case e of
-    Left exc -> log @String $ "failure: " <> show exc
+  r <- (runError @SomeException) . runLambdaIO $ echoEvent
+  case r of
+    Left x -> log @String $ "failure: " <> show x
     Right () -> log @String "success"
   return ()
 

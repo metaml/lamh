@@ -2,13 +2,12 @@ module Network.Aws where
 
 import Data.Proxy
 import Event.Event
+import Event.S3
 import Network.HTTP.Client (Manager)
 import Servant.API
 import Servant.Client
 
--- servant
-
-type Api = "2018-06-01" :> "runtime" :> "invocation" :> "next" :> Get '[JSON] [Event]
+type Api = "2018-06-01" :> "runtime" :> "invocation" :> "next" :> Get '[JSON] S3Event
       :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "response" :> Post '[JSON] Event
       :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "error" :> Post '[JSON] Error
       :<|> "2018-06-01" :> "runtime" :> "invocation" :> "init" :> "error" :> Post '[JSON] Error
@@ -16,15 +15,15 @@ type Api = "2018-06-01" :> "runtime" :> "invocation" :> "next" :> Get '[JSON] [E
 api :: Proxy Api
 api = Proxy
 
-getEvent :: ClientM [Event]
+getS3Event :: ClientM S3Event
 ackEvent :: EventId -> ClientM Event
 ackError :: EventId -> ClientM Error
 initError :: ClientM Error
 
-getEvent :<|> ackEvent :<|> ackError :<|> initError = client api
+getS3Event :<|> ackEvent :<|> ackError :<|> initError = client api
 
-getEvent' :: Manager -> BaseUrl -> IO (Either ClientError [Event])
-getEvent' mgr url = runClientM getEvent (mkClientEnv mgr url)
+getS3Event' :: Manager -> BaseUrl -> IO (Either ClientError S3Event)
+getS3Event' mgr url = runClientM getS3Event (mkClientEnv mgr url)
 
 ackEvent' :: Manager -> BaseUrl -> EventId -> IO (Either ClientError Event)
 ackEvent' mgr url eid = runClientM (ackEvent eid) (mkClientEnv mgr url)

@@ -3,6 +3,7 @@ module Sem.Lambda where
 import Prelude hiding (log)
 import Colog.Polysemy.Effect
 import Event.Event
+import Event.S3
 import Network.HTTP.Client
 import Polysemy
 import Polysemy.Reader
@@ -10,7 +11,7 @@ import Servant.Client
 import qualified Network.Aws as Aws
 
 data Lambda m a where
-  GetS3Event :: Lambda m (Either ClientError [Event])
+  GetS3Event :: Lambda m (Either ClientError S3Event)
   AckEvent :: EventId -> Lambda m (Either ClientError Event)
   AckError :: EventId -> Lambda m (Either ClientError Error)
   InitError :: Error -> Lambda m (Either ClientError Error)
@@ -23,7 +24,7 @@ runLambdaIO = interpret $ \case
     log @String "- GetS3Event"
     url <- ask @BaseUrl
     mgr <- ask @Manager
-    sendM $ Aws.getEvent' mgr url
+    sendM $ Aws.getS3Event' mgr url
   AckEvent eid -> do
     log @String $ "- AckEvent" <> show eid
     url <- ask @BaseUrl

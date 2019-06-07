@@ -1,6 +1,6 @@
 module Main where
 
--- import Sem.Eg.ExcLogTty
+import Lambda
 
 main :: IO ()
-main = undefined -- run
+main = echoEventIO
