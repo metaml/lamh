@@ -5,7 +5,7 @@ import Data.List.Split
 import Colog.Core.IO (logStringStderr)
 import Colog.Polysemy (runLogAction)
 import Colog.Polysemy.Effect
-import Control.Exception hiding (catch)
+import Control.Exception hiding (catch, throw)
 import Network.HTTP.Client
 import Polysemy
 import Polysemy.Error
@@ -18,7 +18,8 @@ echoEventIO :: IO ()
 echoEventIO = do
   hostport <- getEnv "AWS_LAMBDA_RUNTIME_API"
   manager <- newManager defaultManagerSettings
-  let (hostname, port') = (ps !! 0, read (ps !! 1) :: Int) where ps = splitOn ":" hostport
+  let ps = splitOn ":" hostport
+      (hostname, port') = (ps !! 0, read (ps !! 1) :: Int)
       baseUrl = BaseUrl Http hostname port' ""
   runM $ (runLogAction @IO logStringStderr) . runReader manager . runReader baseUrl $ runEchoEventIO
 
@@ -26,11 +27,18 @@ runEchoEventIO :: Sem '[Reader BaseUrl, Reader Manager, Log String, Lift IO] ()
 runEchoEventIO = do
   r <- (runError @SomeException) . runLambdaIO $ echoEvent
   case r of
-    Left x -> log @String $ "failure: " <> show x
-    Right () -> log @String "success"
+    Left x -> log $ "failure: " <> show x
+    Right _ -> log @String "success"
   return ()
 
 echoEvent :: Members '[Error SomeException, Log String, Lambda] r => Sem r ()
 echoEvent = catch @SomeException
-              (getS3Event >>= \evt -> log @String $ show evt)
-              (\err -> log @String $ show err)
+              do getS3EventPair >>= \case
+                   Left e -> log $ show e
+                   Right (evt, evtId) -> do
+                     log $ "evtId=" <> show evtId
+                     log $ "s3Event=" <> show evt
+                     r <- ackEvent evtId
+                     log $ "ackEvent response=" <> show r
+                     return ()
+              \err -> log $ show err

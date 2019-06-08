@@ -12,7 +12,8 @@ import qualified Network.Aws as Aws
 
 data Lambda m a where
   GetS3Event :: Lambda m (Either ClientError S3Event)
-  AckEvent :: EventId -> Lambda m (Either ClientError Event)
+  GetS3EventPair :: Lambda m (Either (ClientError, Maybe EventId)  (S3Event, EventId))
+  AckEvent :: EventId -> Lambda m (Either ClientError Status)
   AckError :: EventId -> Lambda m (Either ClientError Error)
   InitError :: Error -> Lambda m (Either ClientError Error)
 
@@ -25,6 +26,11 @@ runLambdaIO = interpret $ \case
     url <- ask @BaseUrl
     mgr <- ask @Manager
     sendM $ Aws.getS3Event' mgr url
+  GetS3EventPair -> do
+    log @String "- GetS3EventPair"
+    url <- ask @BaseUrl
+    mgr <- ask @Manager
+    sendM $ Aws.getS3EventPair mgr url
   AckEvent eid -> do
     log @String $ "- AckEvent" <> show eid
     url <- ask @BaseUrl
