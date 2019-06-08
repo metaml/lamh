@@ -42,15 +42,15 @@ instance ToJSON Error where
 instance FromJSON Error where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = drop 1 }
 
-data Status = Status { _status :: Text
+data Success = Success { _status :: Text
                        } deriving (Eq, Generic, Show)
 
-instance ToJSON Status where
+instance ToJSON Success where
   toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 1 }
 
-instance FromJSON Status where
+instance FromJSON Success where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = drop 1 }
 
 makeLenses ''AwsEvent
 makeLenses ''Error
-makeLenses ''Status
+makeLenses ''Success
