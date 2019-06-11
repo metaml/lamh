@@ -21,6 +21,7 @@ library
                     , Internal.S3Util
                     , Internal.SnsUtil
                     , Network.Aws
+                    , Sem.Env
                     , Sem.Eg.ExcLogTty
                     , Sem.Eg.Hackage
                     , Sem.Lambda
@@ -53,12 +54,14 @@ library
                     , co-log
                     , co-log-core
                     , co-log-polysemy
+                    , containers
                     , bytestring
                     , either
                     , errors
                     , free
                     , http-client
                     , http-media
+                    , http-types
                     , lens
                     , polysemy
                     , polysemy-plugin

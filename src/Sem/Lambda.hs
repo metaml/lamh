@@ -2,6 +2,9 @@ module Sem.Lambda where
 
 import Prelude hiding (log)
 import Colog.Polysemy.Effect
+import Data.CaseInsensitive
+import Data.HashMap.Strict
+import Data.Text
 import Event.Event
 import Event.S3
 import Network.HTTP.Client
@@ -12,8 +15,8 @@ import qualified Network.Aws as Aws
 
 data Lambda m a where
   GetS3Event :: Lambda m (Either ClientError S3Event)
-  GetS3EventPair :: Lambda m (Either (ClientError, Maybe EventId)  (S3Event, EventId))
-  AckEvent :: EventId -> Lambda m (Either ClientError Status)
+  GetS3EventPair :: Lambda m (Either (ClientError, HashMap (CI Text) Text)  (S3Event, HashMap (CI Text) Text))
+  AckEvent :: EventId -> Lambda m (Either ClientError Success)
   AckError :: EventId -> Lambda m (Either ClientError Error)
   InitError :: Error -> Lambda m (Either ClientError Error)
 

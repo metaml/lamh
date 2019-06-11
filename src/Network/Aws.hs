@@ -1,27 +1,33 @@
 module Network.Aws where
 
+import Data.CaseInsensitive hiding (map)
 import Control.Monad.Free
+import Data.CaseInsensitive as CI hiding (map)
 import Data.Foldable (toList)
 import Data.Proxy
+import Data.Sequence
+import Data.Text hiding (map)
 import Data.Text.Encoding (decodeUtf8)
 import Event.Event
 import Event.S3
 import Network.HTTP.Client (Manager)
-import Servant.API
+import Network.HTTP.Types (Header)
+import Servant.API hiding (Header)
 import Servant.Client
+import qualified Data.HashMap.Strict as H
 import qualified Network.HTTP.Client as HTTP
 import qualified Servant.Client.Free as F
 import qualified Servant.Client.Internal.HttpClient as I
 
 type Api = "2018-06-01" :> "runtime" :> "invocation" :> "next" :> Get '[JSON] S3Event
-           :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "response" :> Post '[JSON] Status
+           :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "response" :> Post '[JSON] Success
            :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "error" :> Post '[JSON] Error
            :<|> "2018-06-01" :> "runtime" :> "invocation" :> "init" :> "error" :> Post '[JSON] Error
 api :: Proxy Api
 api = Proxy
 
 getS3Event :: ClientM S3Event
-ackEvent :: EventId -> ClientM Status
+ackEvent :: EventId -> ClientM Success
 ackError :: EventId -> ClientM Error
 initError :: ClientM Error
 
@@ -30,7 +36,7 @@ getS3Event :<|> ackEvent :<|> ackError :<|> initError = client api
 getS3Event' :: Manager -> BaseUrl -> IO (Either ClientError S3Event)
 getS3Event' mgr url = runClientM getS3Event (mkClientEnv mgr url)
 
-ackEvent' :: Manager -> BaseUrl -> EventId -> IO (Either ClientError Status)
+ackEvent' :: Manager -> BaseUrl -> EventId -> IO (Either ClientError Success)
 ackEvent' mgr url eid = runClientM (ackEvent eid) (mkClientEnv mgr url)
 
 ackError' :: Manager -> BaseUrl -> EventId -> IO (Either ClientError Error)
@@ -46,22 +52,29 @@ api' = Proxy
 getFS3Event :: Free F.ClientF S3Event
 getFS3Event = F.client api'
 
+getS3EventPair :: Manager -> BaseUrl -> IO (Either (ClientError, H.HashMap (CI Text) Text) (S3Event, H.HashMap (CI Text) Text))
+getS3EventPair mgr url = do
+  e <- getS3EventPair' mgr url
+  case e of
+    Left (err, hs) -> return $ Left (err, hmap hs)
+    Right (evt, hs) -> return $ Right (evt, hmap hs)
+  where
+    hmap hs = H.fromList $ map (\(x, y) -> (CI.mk . decodeUtf8 $ original x, decodeUtf8 y)) $ toList hs
+
 -- NB: there must be an easier way
-getS3EventPair :: Manager -> BaseUrl -> IO (Either (ClientError, Maybe EventId) (S3Event, EventId))
-getS3EventPair mgr url = case getFS3Event of
-  Pure r -> error $ show r
-  Free (F.Throw err) -> return $ Left (err, Nothing)
+getS3EventPair' :: Manager -> BaseUrl -> IO (Either (ClientError, Seq Header) (S3Event, Seq Header))
+getS3EventPair' mgr url = case getFS3Event of
+  Pure r -> error $ "should not happen: r=" <> show r
+  Free (F.Throw err) -> return $ Left (err, Empty)
   Free (F.RunRequest req k) -> do
     let req' = I.requestToClientRequest url req
     res' <- HTTP.httpLbs req' mgr
     let res = I.clientResponseToResponse id res'
-        evtId = EventId . decodeUtf8 <$> lookup "Lambda-Runtime-Aws-Request-Id" (toList $ responseHeaders res)
-        evt = k res
-    case (evtId, evt) of
-      (Just evId, Pure ev) -> return $ Right (ev, evId)
-      (Nothing, Pure ev) -> error $ "shoud not happen | " <> show ev
-      (evId, Free (F.Throw err)) -> return $ Left (err, evId)
-      (_, Free (F.RunRequest _ _)) -> error "should not happen"
+        hdrs = responseHeaders res
+    case k res of
+      Pure evt -> return $ Right (evt, hdrs)
+      Free (F.Throw err) -> return $ Left (err, hdrs)
+      Free (F.RunRequest _ _) -> error $ "should not happen"
 
 -- https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html#runtimes-api-initerror
 

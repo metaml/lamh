@@ -4,18 +4,19 @@ PROJECT = $(shell dirname ${PWD})
 VERSION := polysemy-$(shell date +%s)
 
 AWS_CFN_STACKS ?= ${HOME}/proj/aws-cfn-stacks
+LAMBDA = aws-cfn-app-deli-test-s3-dev-bucket-lambda
 
 lambda-dev: ## deploy to s3 bucket in development
 lambda-dev: URL = s3://earnest-lambda-code-dev-us-east-1/s3-lambda/
 lambda-dev: export AWS_PROFILE = development
 lambda-dev: clean lambda s3-cp
-	$(AWS_CFN_STACKS)/bin/deli-cf update aws-cfn-app-deli-s3-lambda --param version:$(VERSION)
+	$(AWS_CFN_STACKS)/bin/deli-cf update $(LAMBDA) --param version:$(VERSION)
 
 lambda-prod: ## deploy to s3 bucket in production
 lambda-prod: URL = s3://earnest-lambda-code-us-east-1/s3-lambda/
 lambda-prod: export AWS_PROFILE = production
 lambda-prod: clean lambda s3-cp
-	echo noop: $(AWS_CFN_STACKS)/bin/deli-cf update aws-cfn-app-deli-s3-lambda --param version:$(VERSION)
+	echo noop: $(AWS_CFN_STACKS)/bin/deli-cf update $(LAMBDA) --param version:$(VERSION)
 
 lambda: ## zip lambda (linux-binary) in <lamha>/deploy
 	docker run --rm --interactive --tty --volume $(PROJECT):/proj --volume $(PROJECT)/deploy:/root --workdir /proj ghc make zip
