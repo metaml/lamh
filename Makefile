@@ -43,6 +43,8 @@ help: ## help
 	 | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}'
 	@ghc --version
 	@cabal --version
+	@hlint --version
+	@ghcid --version
 
 init: ## initialize project
 	${MAKE} -f etc/init.mk init
@@ -55,6 +57,9 @@ lambda-dev: ## deploy to s3 bucket in development
 
 lambda-prod: ## deploy to s3 bucket in production
 	cd etc && ${MAKE} -f deploy.mk $@
+
+trigger-dev: ## trigger lambda in dev
+	touch /tmp/_SYNC && aws s3 cp /tmp/_SYNC s3://earnest-deli-test-dev-us-east-1/
 
 zip: ## build and zip lambda function
 	${MAKE} -f etc/deploy.mk $@

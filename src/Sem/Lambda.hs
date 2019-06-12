@@ -17,8 +17,8 @@ data Lambda m a where
   GetS3Event :: Lambda m (Either ClientError S3Event)
   GetS3EventPair :: Lambda m (Either (ClientError, HashMap (CI Text) Text)  (S3Event, HashMap (CI Text) Text))
   AckEvent :: EventId -> Lambda m (Either ClientError Success)
-  AckError :: EventId -> Lambda m (Either ClientError Error)
-  InitError :: Error -> Lambda m (Either ClientError Error)
+  AckError :: EventId -> Lambda m (Either ClientError Success)
+  InitError :: Error -> Lambda m (Either ClientError Success)
 
 makeSem ''Lambda
 

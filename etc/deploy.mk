@@ -6,13 +6,13 @@ VERSION := polysemy-$(shell date +%s)
 AWS_CFN_STACKS ?= ${HOME}/proj/aws-cfn-stacks
 LAMBDA = aws-cfn-app-deli-test-s3-dev-bucket-lambda
 
-lambda-dev: ## deploy to s3 bucket in development
+lambda-dev: ## deploy to dev's s3 bucket
 lambda-dev: URL = s3://earnest-lambda-code-dev-us-east-1/s3-lambda/
 lambda-dev: export AWS_PROFILE = development
 lambda-dev: clean lambda s3-cp
 	$(AWS_CFN_STACKS)/bin/deli-cf update $(LAMBDA) --param version:$(VERSION)
 
-lambda-prod: ## deploy to s3 bucket in production
+lambda-prod: ## deploy to prod's s3 bucket
 lambda-prod: URL = s3://earnest-lambda-code-us-east-1/s3-lambda/
 lambda-prod: export AWS_PROFILE = production
 lambda-prod: clean lambda s3-cp

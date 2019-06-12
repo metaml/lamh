@@ -19,12 +19,6 @@ import Sem.Lambda
 import Servant.Client (BaseUrl(..), Scheme(..))
 import System.Environment
 
-lambdaRuntimeAwsRequestId :: CI Text
-lambdaRuntimeAwsRequestId = mk "Lambda-Runtime-Aws-Request-Id"
-
-lambdaRuntimeTraceId :: CI Text
-lambdaRuntimeTraceId = mk "Lambda-Runtime-Trace-Id"
-
 echoEventIO :: IO ()
 echoEventIO = do
   hostport <- getEnv "AWS_LAMBDA_RUNTIME_API"
@@ -38,8 +32,8 @@ runEchoEventIO :: Sem '[Reader BaseUrl, Reader Manager, Log String, Lift IO] ()
 runEchoEventIO = do
   r <- (runError @SomeException) . runEnvIO . runLambdaIO $ echoEvent
   case r of
-    Left x -> log $ "failure: " <> show x
-    Right _ -> log @String "success"
+    Left x -> log $ "- failure: " <> show x
+    Right _ -> log @String "- success"
   return ()
 
 echoEvent :: Members '[Error SomeException, Log String, Env, Lambda] r => Sem r ()
@@ -59,9 +53,14 @@ echoEvent = catch @SomeException
                      case traceId of
                        Just tid -> set "_X_AMZN_TRACE_ID" (show tid)
                        Nothing -> log $ "- no " <> show lambdaRuntimeTraceId <> ": " <> show hmap <> " | " <> show evt
-                     let evtId = lookup lambdaRuntimeAwsRequestId hmap
-                     case evtId of
-                       Just eid -> ackEvent (EventId eid) >>= \r -> log $ "ackEvent response=" <> show r
+                     case lookup lambdaRuntimeAwsRequestId hmap of
+                       Just reqId -> ackEvent (EventId reqId) >>= \r -> log $ "ackEvent response=" <> show r
                        Nothing -> log $ "- no " <> show lambdaRuntimeAwsRequestId <> ": " <> show hmap <> " | " <> show evt
                      return ()
-              \err -> log $ "caught err: " <> show err
+              \err -> log $ "- caught err: " <> show err
+
+lambdaRuntimeAwsRequestId :: CI Text
+lambdaRuntimeAwsRequestId = mk "Lambda-Runtime-Aws-Request-Id"
+
+lambdaRuntimeTraceId :: CI Text
+lambdaRuntimeTraceId = mk "Lambda-Runtime-Trace-Id"
