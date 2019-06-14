@@ -9,6 +9,7 @@ export GHC_VERSION = 8.6.5
 init: install-ghcup-deps install-ghcup install-ghc install-pkgs ## install projects dependencies
 
 install-ghcup-deps: ## install ghcup dependencies
+	apt-get update -y
 	apt-get install -y libc-bin curl coreutils gcc libgmp-dev libnuma-dev libtinfo-dev zlib1g-dev xz-utils zip
 
 install-ghcup: ## install ghcup
