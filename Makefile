@@ -7,36 +7,36 @@ BIN ?= lamha
 VERSION ?= 1
 
 dev: clean ## build continuously
-	@cabal new-build 2>&1 | source-highlight --src-lang=haskell --out-format=esc
+	@cabal v2-build 2>&1 | source-highlight --src-lang=haskell --out-format=esc
 	@fswatcher --path . \
 	   	   --include "\.hs$$|\.cabal$$" \
 		   --throttle 31 \
-		   cabal new-build 2>&1 \
+		   cabal v2-build 2>&1 \
 	| source-highlight --src-lang=haskell --out-format=esc
 
 dev-ghcid: clean ## build continuously using ghcid
-	@ghcid --command="cabal new-repl -fwarn-unused-binds -fwarn-unused-imports -fwarn-orphans" \
-	       --reload=app/lamha.hs \
-	       --restart=lamha.cabal \
+	@ghcid --command="cabal v2-repl -fwarn-unused-binds -fwarn-unused-imports -fwarn-orphans" \
+	       --reload=app/lamh.hs \
+	       --restart=lamh.cabal \
 	| source-highlight --src-lang=haskell --out-format=esc
 
 build: clean # lint (breaks on multiple readers) ## build
-	cabal new-build --jobs=8
+	ocabal v2-build --jobs='$$ncpus'
 
 test: ## test
-	cabal new-test
+	cabal v2-test
 
 lint: ## lint
 	hlint app src
 
 clean: ## clean
-	cabal new-clean
+	cabal v2-clean
 
-run: ## run main, default: BIN=lamha
-	cabal new-run ${BIN}
+run: ## run main, default: BIN=lamh
+	cabal v2-run ${BIN}
 
 repl: ## repl
-	cabal new-repl
+	cabal v2-repl
 
 help: ## help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -44,7 +44,8 @@ help: ## help
 	@ghc --version
 	@cabal --version
 	@hlint --version
-	@ghcid --version
+	@ghcid --version --ignore-loaded
+	@echo BIN=lamh
 
 init: ## initialize project
 	${MAKE} -f etc/init.mk init
@@ -63,11 +64,3 @@ trigger-dev: ## trigger lambda in dev
 
 zip: ## build and zip lambda function
 	${MAKE} -f etc/deploy.mk $@
-
-# colors
-NON = \033[0m
-RED = \033[1;31m
-GRN = \033[1;32m
-BLU = \033[1;34m
-MAG = \033[1;35m
-CYN = \033[1;36m

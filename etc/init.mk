@@ -14,23 +14,27 @@ install-ghc: ## install ghc
 	ghcup install $(GHC_VERSION)
 	ghcup set $(GHC_VERSION)
 
+install-pkgs: BINUP = ~/.ghcup/bin
 install-pkgs: cabal-update ## install hackage binaries
 	ghcup install-cabal
-	cabal new-install --overwrite-policy=always cabal-install
-	cabal new-install --overwrite-policy=always fswatcher
-	cabal new-install --overwrite-policy=always ghcid
-	cabal new-install --overwrite-policy=always hlint
+	$(BINUP)/cabal v2-install --installdir=${HOME}/.cabal --overwrite-policy=always cabal-install
+        cabal v2-install --overwrite-policy=always fswatcher
+        cabal v2-install --overwrite-policy=always ghcid
+        cabal v2-install --overwrite-policy=always hlint
+        cabal v2-install --overwrite-policy=always Cabal
 
 install-ghcup-deps: ## install ghcup dependencies
-	brew update
+	- brew update
+	brew upgrade
 	brew install curl coreutils gcc@8 gmp make ncurses python3 source-highlight xz
 	- brew unlink gcc
 	- brew unlink gcc@7
 	brew unlink gcc@8 && brew link gcc@8
 
 cabal-update: ## cabal update
-	cabal new-install --overwrite-policy=always Cabal cabal-install
-	cabal new-update
+	cabal v2-update
+#	cabal v2-install --force-reinstalls --overwrite-policy=always Cabal cabal-install
+
 
 cabal-config: ## user cabal config
 	cabal user-config update
