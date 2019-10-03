@@ -21,7 +21,7 @@ dev-ghcid: clean ## build continuously using ghcid
 	| source-highlight --src-lang=haskell --out-format=esc
 
 build: clean # lint (breaks on multiple readers) ## build
-	ocabal v2-build --jobs='$$ncpus'
+	cabal v2-build --jobs='$$ncpus'
 
 test: ## test
 	cabal v2-test
@@ -45,11 +45,13 @@ help: ## help
 	@cabal --version
 	@hlint --version
 	@ghcid --version --ignore-loaded
-	@echo BIN=lamh
+	@echo BIN=${BIN}
 
+# @todo: not indempotent--fix later
 init: ## initialize project
 	${MAKE} -f etc/init.mk init
 
+# @todo: not indempotent--fix later
 update: ## update project depedencies
 	${MAKE} -f etc/init.mk install-pkgs
 

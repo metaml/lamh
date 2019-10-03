@@ -1,4 +1,4 @@
-cabal-version:        2.4
+cabal-version:        3.0
 name:                 lamh
 version:              0.1.0.0
 license:              BSD-3-Clause
@@ -21,8 +21,6 @@ library
                     , Internal.SnsUtil
                     , Network.Aws
                     , Sem.Env
-                    , Sem.Eg.ExcLogTty
-                    , Sem.Eg.Hackage
                     , Sem.Lambda
                     , Sem.Tty
   hs-source-dirs:     src
@@ -49,12 +47,10 @@ library
   build-depends:      base ^>=4.12.0.0
                     , aeson
                     , attoparsec
-                    , case-insensitive
-                    , co-log
-                    , co-log-core
-                    , co-log-polysemy
-                    , containers
+                    , binary
                     , bytestring
+                    , case-insensitive
+                    , containers
                     , either
                     , errors
                     , free
