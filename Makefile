@@ -4,7 +4,6 @@ export SHELL = /bin/bash
 export PATH = .:${HOME}/.cabal/bin:${HOME}/.ghcup/bin:/usr/local/bin:/usr/bin:/bin
 
 BIN ?= lamha
-VERSION ?= 1
 
 dev: clean ## build continuously
 	@cabal v2-build 2>&1 | source-highlight --src-lang=haskell --out-format=esc

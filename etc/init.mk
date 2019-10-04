@@ -20,7 +20,7 @@ install-ghc: ## install ghc
 
 install-pkgs: BINS = ghcid hlint fswatcher
 install-pkgs: ## install hackage binaries
-	for i in $(BINS); do cabal v2-install $$i; done
+	for i in $(BINS); do cabal v2-install --overwrite-policy=always $$i; done
 
 install-ghcup-deps: ## install ghcup dependencies
 	- brew update

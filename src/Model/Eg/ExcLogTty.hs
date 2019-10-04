@@ -1,4 +1,4 @@
-module Sem.Eg.ExcLogTty where
+module Model.Eg.ExcLogTty where
 
 import Prelude hiding (log)
 import Colog.Core

@@ -1,12 +1,11 @@
-module Sem.Lambda where
+module Model.Lambda where
 
-import Prelude hiding (log)
-import Colog.Polysemy.Effect
 import Data.CaseInsensitive
 import Data.HashMap.Strict
 import Data.Text
 import Event.Event
 import Event.S3
+import Model.Log
 import Network.HTTP.Client
 import Polysemy
 import Polysemy.Reader
@@ -22,30 +21,30 @@ data Lambda m a where
 
 makeSem ''Lambda
 
-runLambdaIO :: Members '[Reader BaseUrl, Reader Manager, Log String, Lift IO] r => Sem (Lambda ': r) a -> Sem r a
+runLambdaIO :: Members '[Reader BaseUrl, Reader Manager, Log, Embed IO] r => Sem (Lambda ': r) a -> Sem r a
 runLambdaIO = interpret $ \case
   GetS3Event -> do
-    log @String "- GetS3Event"
+    logStderr "- GetS3Event"
     url <- ask @BaseUrl
     mgr <- ask @Manager
-    sendM $ Aws.getS3Event' mgr url
+    embed $ Aws.getS3Event' mgr url
   GetS3EventPair -> do
-    log @String "- GetS3EventPair"
+    logStderr "- GetS3EventPair"
     url <- ask @BaseUrl
     mgr <- ask @Manager
-    sendM $ Aws.getS3EventPair mgr url
+    embed $ Aws.getS3EventPair mgr url
   AckEvent eid -> do
-    log @String $ "- AckEvent" <> show eid
+    logStderr $ "- AckEvent"
     url <- ask @BaseUrl
     mgr <- ask @Manager
-    sendM $ Aws.ackEvent' mgr url eid
+    embed $ Aws.ackEvent' mgr url eid
   AckError eid -> do
-    log @String $ "- AckError" <> show eid
+    logStderr $ "- AckError"
     url <- ask @BaseUrl
     mgr <- ask @Manager
-    sendM $ Aws.ackError' mgr url eid
+    embed $ Aws.ackError' mgr url eid
   InitError err -> do
-    log @String $ "- InitError" <> show err
+    logStderr $ "- InitError"
     url <- ask @BaseUrl
     mgr <- ask @Manager
-    sendM $ Aws.initError' mgr url
+    embed $ Aws.initError' mgr url

@@ -1,5 +1,5 @@
 {-# language FlexibleInstances, MultiParamTypeClasses #-}
-module Sem.Eg.Hackage where
+module Model.Eg.Hackage where
 
 import Prelude as P
 import Data.Aeson

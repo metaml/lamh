@@ -1,4 +1,4 @@
-module Sem.Tty where
+module Model.Tty where
 
 import Prelude
 import Polysemy
@@ -10,8 +10,8 @@ data Tty m a where
 
 makeSem ''Tty
 
-runTtyIO :: Member (Lift IO) r => Sem (Tty ': r) a -> Sem r a
+runTtyIO :: Member (Embed IO) r => Sem (Tty ': r) a -> Sem r a
 runTtyIO = interpret $ \case
-  Get -> sendM getLine
-  Put msg -> sendM $ putStrLn msg
-  Put' a -> sendM $ print a
+  Get -> embed getLine
+  Put msg -> embed $ putStrLn msg
+  Put' a -> embed $ print a

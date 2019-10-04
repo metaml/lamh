@@ -1,4 +1,4 @@
-module Sem.Env where
+module Model.Env where
 
 import Polysemy
 import System.Environment
@@ -12,7 +12,7 @@ data Env m a where
 
 makeSem ''Env
 
-runEnvIO :: Member (Lift IO) r => Sem (Env ': r) a -> Sem r a
+runEnvIO :: Member (Embed IO) r => Sem (Env ': r) a -> Sem r a
 runEnvIO = interpret $ \case
-  Get k -> sendM $ lookupEnv k
-  Set k v -> sendM $ setEnv k v
+  Get k -> embed $ lookupEnv k
+  Set k v -> embed $ setEnv k v
