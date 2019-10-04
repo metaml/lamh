@@ -42,7 +42,11 @@ echoEvent = catch @SomeException
                      let traceId = lookup lambdaRuntimeTraceId hmap
                      case traceId of
                        Just tid -> set "_X_AMZN_TRACE_ID" (show tid)
-                       Nothing -> logStderr $ "- no " <> showt lambdaRuntimeTraceId <> ": " <> showt hmap <> " | " <> showt err
+                       Nothing -> logStderr $ "- no "
+                                            <> showt lambdaRuntimeTraceId
+                                            <> ": "
+                                            <> showt hmap
+                                            <> " | " <> showt err
                      logStderr $ showt err
                    Right (evt, hmap) -> do
                      let traceId = lookup lambdaRuntimeTraceId hmap
