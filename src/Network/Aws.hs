@@ -23,6 +23,7 @@ type Api = "2018-06-01" :> "runtime" :> "invocation" :> "next" :> Get '[JSON] S3
            :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "response" :> Post '[JSON] Success
            :<|> "2018-06-01" :> "runtime" :> "invocation" :> Capture "eventid" EventId :> "error" :> Post '[JSON] Success
            :<|> "2018-06-01" :> "runtime" :> "invocation" :> "init" :> "error" :> Post '[JSON] Success
+
 api :: Proxy Api
 api = Proxy
 
@@ -53,11 +54,9 @@ getFS3Event :: Free F.ClientF S3Event
 getFS3Event = F.client api'
 
 getS3EventPair :: Manager -> BaseUrl -> IO (Either (ClientError, H.HashMap (CI Text) Text) (S3Event, H.HashMap (CI Text) Text))
-getS3EventPair mgr url = do
-  e <- getS3EventPair' mgr url
-  case e of
-    Left (err, hs) -> return $ Left (err, hmap hs)
-    Right (evt, hs) -> return $ Right (evt, hmap hs)
+getS3EventPair mgr url = getS3EventPair' mgr url >>= \case
+  Left (err, hs) -> pure $ Left (err, hmap hs)
+  Right (evt, hs) -> pure $ Right (evt, hmap hs)
   where
     hmap hs = H.fromList $ map (\(x, y) -> (CI.mk . decodeUtf8 $ original x, decodeUtf8 y)) $ toList hs
 
@@ -65,15 +64,15 @@ getS3EventPair mgr url = do
 getS3EventPair' :: Manager -> BaseUrl -> IO (Either (ClientError, Seq Header) (S3Event, Seq Header))
 getS3EventPair' mgr url = case getFS3Event of
   Pure r -> error $ "should not happen: r=" <> show r
-  Free (F.Throw err) -> return $ Left (err, Empty)
+  Free (F.Throw err) -> pure $ Left (err, Empty)
   Free (F.RunRequest req k) -> do
     let req' = I.requestToClientRequest url req
     res' <- HTTP.httpLbs req' mgr
     let res = I.clientResponseToResponse id res'
         hdrs = responseHeaders res
     case k res of
-      Pure evt -> return $ Right (evt, hdrs)
-      Free (F.Throw err) -> return $ Left (err, hdrs)
+      Pure evt -> pure $ Right (evt, hdrs)
+      Free (F.Throw err) -> pure $ Left (err, hdrs)
       Free (F.RunRequest _ _) -> error $ "should not happen"
 
 -- https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html#runtimes-api-initerror

@@ -21,8 +21,8 @@ data Lambda m a where
 
 makeSem ''Lambda
 
-runLambdaIO :: Members '[Reader BaseUrl, Reader Manager, Log, Embed IO] r => Sem (Lambda ': r) a -> Sem r a
-runLambdaIO = interpret $ \case
+lambdaToIO :: Members '[Reader BaseUrl, Reader Manager, Log, Embed IO] r => Sem (Lambda ': r) a -> Sem r a
+lambdaToIO = interpret $ \case
   GetS3Event -> do
     logStderr "- GetS3Event"
     url <- ask @BaseUrl
@@ -44,7 +44,7 @@ runLambdaIO = interpret $ \case
     mgr <- ask @Manager
     embed $ Aws.ackError' mgr url eid
   InitError err -> do
-    logStderr $ "- InitError"
+    logStderr $ "- InitError" <> (pack . show) err
     url <- ask @BaseUrl
     mgr <- ask @Manager
     embed $ Aws.initError' mgr url

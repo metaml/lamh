@@ -1,40 +1,28 @@
+{-# language AllowAmbiguousTypes #-}
+{-# language NoMonomorphismRestriction #-}
 module Event.S3 where
 
-import Control.Lens
 import Data.Aeson
 import Data.HashMap.Strict
 import Data.Text hiding (drop)
 import GHC.Generics
-import Internal.S3Util (rekey)
 
-data S3Object = S3Object { _key :: Text
-                         , _size :: Maybe Integer
-                         , _eTag :: Maybe Text
-                         , _versionId :: Maybe Text
-                         , _sequencer :: Text
-                         } deriving (Eq, Generic, Show)
+data S3Object = S3Object { key :: Text
+                         , size :: Maybe Integer
+                         , eTag :: Maybe Text
+                         , versionId :: Maybe Text
+                         , sequencer :: Text
+                         } deriving (Eq, FromJSON, ToJSON, Generic, Show)
 
-instance ToJSON S3Object where
-  toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 1 }
+data Bucket = Bucket { name :: Text
+                     , arn :: Text
+                     , ownerIdentity :: Maybe (HashMap Text Text)
+                     } deriving (Eq, FromJSON, ToJSON, Generic, Show)
 
-instance FromJSON S3Object where
-  parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = drop 1 }
-
-data Bucket = Bucket { _name :: Text
-                     , _arn :: Text
-                     , _ownerIdentity :: Maybe (HashMap Text Text)
-                     } deriving (Eq, Generic, Show)
-
-instance ToJSON Bucket where
-  toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 1 }
-
-instance FromJSON Bucket where
-  parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = drop 1 }
-
-data S3 = S3 { _s3SchemaVersion :: Text
-             , _configurationId :: Text
-             , _bucket :: Bucket
-             , _s3object :: S3Object
+data S3 = S3 { s3SchemaVersion :: Text
+             , configurationId :: Text
+             , bucket :: Bucket
+             , s3object :: S3Object
              } deriving (Eq, Generic, Show)
 
 instance ToJSON S3 where
@@ -43,26 +31,19 @@ instance ToJSON S3 where
 instance FromJSON S3 where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey }
 
-data Record = Record { _eventVersion :: Text
-                     , _eventSource :: Text
-                     , _awsRegion :: Text
-                     , _eventTime :: Text
-                     , _eventName :: Text
-                     , _s3 :: S3
-                     , _userIdentity :: Maybe (HashMap Text Text)
-                     , _requestParameters :: Maybe (HashMap Text Text)
-                     , _responseElements :: Maybe (HashMap Text Text)
-                     , _glacierEventData :: Maybe (HashMap Text Value)
-                     } deriving (Eq, Generic, Show)
+data Record = Record { eventVersion :: Text
+                     , eventSource :: Text
+                     , awsRegion :: Text
+                     , eventTime :: Text
+                     , eventName :: Text
+                     , s3 :: S3
+                     , userIdentity :: Maybe (HashMap Text Text)
+                     , requestParameters :: Maybe (HashMap Text Text)
+                     , responseElements :: Maybe (HashMap Text Text)
+                     , glacierEventData :: Maybe (HashMap Text Value)
+                     } deriving (Eq, FromJSON, ToJSON, Generic, Show)
 
-instance ToJSON Record where
-  toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 1 }
-
-instance FromJSON Record where
-  parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = drop 1 }
-
--- | s3 event
-newtype S3Event = S3Event { _records :: [Record] }
+newtype S3Event = S3Event { records :: [Record] }
   deriving (Eq, Generic, Show)
 
 instance ToJSON S3Event where
@@ -71,13 +52,10 @@ instance ToJSON S3Event where
 instance FromJSON S3Event where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey' }
 
-rekey' :: String -> String
-rekey' "_records" = "Records"
-rekey' k = drop 1 k
+rekey :: String -> String
+rekey "s3object" = "object"
+rekey k = k
 
--- | make lenses
-makeLenses ''S3Object
-makeLenses ''Bucket
-makeLenses ''S3
-makeLenses ''Record
-makeLenses ''S3Event
+rekey' :: String -> String
+rekey' "records" = "Records"
+rekey' k = k

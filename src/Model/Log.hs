@@ -10,8 +10,8 @@ data Log m a where
 
 makeSem ''Log
 
-runLogIO :: Member (Embed IO) r => Sem (Log ': r) a -> Sem r a
-runLogIO = interpret $ \case
+logToIO :: Member (Embed IO) r => Sem (Log ': r) a -> Sem r a
+logToIO = interpret $ \case
   LogStdout x -> embed $ log' logTextStdout x
   LogStderr x -> embed $ log' logTextStderr x
   where

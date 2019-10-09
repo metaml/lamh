@@ -18,18 +18,18 @@ import Model.Log
 import Servant.Client (BaseUrl(..), Scheme(..))
 import System.Environment
 
-echoEventIO :: IO ()
-echoEventIO = do
+main' :: IO ()
+main' = do
   hostport <- getEnv "AWS_LAMBDA_RUNTIME_API"
   manager <- newManager defaultManagerSettings
   let ps = splitOn ":" hostport
       (hostname, port') = (ps !! 0, read (ps !! 0) :: Int)
       baseUrl = BaseUrl Http hostname port' ""
-  runM $ runLogIO . runReader manager . runReader baseUrl $ runEchoEventIO
+  runM . logToIO . runReader manager . runReader baseUrl $ echoEventIO
 
-runEchoEventIO :: Sem '[Reader BaseUrl, Reader Manager, Log, Embed IO] ()
-runEchoEventIO = do
-  r <- (runError @SomeException) . runEnvIO . runLambdaIO $ echoEvent
+echoEventIO :: Sem '[Reader BaseUrl, Reader Manager, Log, Embed IO] ()
+echoEventIO = do
+  r <- (runError @SomeException) . envToIO . lambdaToIO $ echoEvent
   case r of
     Left x -> logStderr $ "- failure: " <> showt x
     Right _ -> logStderr "- success"

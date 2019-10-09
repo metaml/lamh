@@ -1,24 +1,18 @@
+{-# language AllowAmbiguousTypes #-}
+{-# language NoMonomorphismRestriction #-}
 module Event.ApiGatewayOutput where
-import Control.Lens
+
 import Data.Aeson
 import Data.HashMap.Strict
 import Data.Text (Text)
 import GHC.Generics
 
-data ApiGatewayOutput = ApiGatewayOutput { _isBase64Encoded :: Bool
-                                         , _statusCode :: Int
-                                         , _headers :: Maybe (HashMap Text Text)
-                                         , _multiValueHeaders :: Maybe (HashMap Text [Text])
-                                         , _body :: Text
-                                         } deriving (Eq, Generic, Show)
-
-instance ToJSON ApiGatewayOutput where
-  toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 1 }
-
-instance FromJSON ApiGatewayOutput where
-  parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = drop 1 }
-
-makeLenses ''ApiGatewayOutput
+data ApiGatewayOutput = ApiGatewayOutput { isBase64Encoded :: Bool
+                                         , statusCode :: Int
+                                         , headers :: Maybe (HashMap Text Text)
+                                         , multiValueHeaders :: Maybe (HashMap Text [Text])
+                                         , body :: Text
+                                         } deriving (Eq, FromJSON, ToJSON, Generic, Show)
 
 apiGatewayOutput :: Text -> ApiGatewayOutput
 apiGatewayOutput = ApiGatewayOutput False 200 Nothing Nothing

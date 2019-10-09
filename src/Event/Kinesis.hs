@@ -1,15 +1,15 @@
+{-# language AllowAmbiguousTypes #-}
+{-# language NoMonomorphismRestriction #-}
 module Event.Kinesis where
 
-import Control.Lens
 import Data.Aeson
 import Data.Text (Text)
 import GHC.Generics
-import Internal.KinesisUtil (rekey, rekey', rekey'')
 
-data Kinesis = Kinesis { _partitionKey :: Text
-                       , _data' :: Text
-                       , _kinesisSchemaVersion :: Text
-                       , _sequenceNumber :: Text
+data Kinesis = Kinesis { partitionKey :: Text
+                       , data' :: Text
+                       , kinesisSchemaVersion :: Text
+                       , sequenceNumber :: Text
                        } deriving (Eq, Generic, Show)
 
 instance ToJSON Kinesis where
@@ -18,14 +18,14 @@ instance ToJSON Kinesis where
 instance FromJSON Kinesis where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey }
 
-data Record = Record { _eventId :: Text
-                     , _eventVersion :: Text
-                     , _kinesis :: Kinesis
-                     , _invokeIdentityArn :: Text
-                     , _eventName :: Text
-                     , _eventSourceARN :: Text
-                     , _eventSource :: Text
-                     , _awsRegion :: Text
+data Record = Record { eventId :: Text
+                     , eventVersion :: Text
+                     , kinesis :: Kinesis
+                     , invokeIdentityArn :: Text
+                     , eventName :: Text
+                     , eventSourceARN :: Text
+                     , eventSource :: Text
+                     , awsRegion :: Text
                      } deriving (Eq, Generic, Show)
 
 instance ToJSON Record where
@@ -34,7 +34,7 @@ instance ToJSON Record where
 instance FromJSON Record where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey'' }
 
-newtype KinesisEvent = KinesisEvent { _records :: [Record] }
+newtype KinesisEvent = KinesisEvent { records :: [Record] }
   deriving (Eq, Generic, Show)
 
 instance ToJSON KinesisEvent where
@@ -43,6 +43,14 @@ instance ToJSON KinesisEvent where
 instance FromJSON KinesisEvent where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = rekey' }
 
-makeLenses ''Kinesis
-makeLenses ''Record
-makeLenses ''KinesisEvent
+rekey :: String -> String
+rekey "data'" = "data"
+rekey k = k
+
+rekey' :: String -> String
+rekey' "records" = "Records"
+rekey' k = k
+
+rekey'' :: String -> String
+rekey'' "eventId" = "eventID"
+rekey'' k = k

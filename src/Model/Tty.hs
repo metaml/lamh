@@ -10,8 +10,8 @@ data Tty m a where
 
 makeSem ''Tty
 
-runTtyIO :: Member (Embed IO) r => Sem (Tty ': r) a -> Sem r a
-runTtyIO = interpret $ \case
+ttyToIO :: Member (Embed IO) r => Sem (Tty ': r) a -> Sem r a
+ttyToIO = interpret $ \case
   Get -> embed getLine
   Put msg -> embed $ putStrLn msg
   Put' a -> embed $ print a

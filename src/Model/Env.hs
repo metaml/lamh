@@ -12,7 +12,7 @@ data Env m a where
 
 makeSem ''Env
 
-runEnvIO :: Member (Embed IO) r => Sem (Env ': r) a -> Sem r a
-runEnvIO = interpret $ \case
+envToIO :: Member (Embed IO) r => Sem (Env ': r) a -> Sem r a
+envToIO = interpret $ \case
   Get k -> embed $ lookupEnv k
   Set k v -> embed $ setEnv k v
