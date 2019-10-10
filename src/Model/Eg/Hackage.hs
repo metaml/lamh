@@ -39,26 +39,26 @@ makeSem ''Tty
 putPkgs :: Members '[Tty, Hackage] r => Sem r ()
 putPkgs = getPkgs >>= put
 
-runTtyIO :: Member (Lift IO) r => Sem (Tty ': r) a -> Sem r a
+runTtyIO :: Member (Embed IO) r => Sem (Tty ': r) a -> Sem r a
 runTtyIO = interpret $ \case
-  Put a -> sendM $ P.print a
+  Put a -> embed $ P.print a
 
-runHackageIO :: Member (Lift IO) r => Sem (Hackage ': r) a -> Sem r a
+runHackageIO :: Member (Embed IO) r => Sem (Hackage ': r) a -> Sem r a
 runHackageIO = interpret $ \case
-  GetPkgs -> sendM getPkgs'
-  GetUsers -> sendM getUsers'
+  GetPkgs -> embed getPkgs'
+  GetUsers -> embed getUsers'
 
-putPkgsIO :: Sem '[Lift IO] ()
+putPkgsIO :: Sem '[Embed IO] ()
 putPkgsIO = runHackageIO . runTtyIO $ putPkgs
 
-putPkgsIO' :: Sem '[Lift IO] ()
+putPkgsIO' :: Sem '[Embed IO] ()
 putPkgsIO' = runTtyIO . runHackageIO $ putPkgs
 
 -- runM <x>IO
-pkgsIO :: Sem '[Lift IO] [Package]
+pkgsIO :: Sem '[Embed IO] [Package]
 pkgsIO = runHackageIO getPkgs
 
-usersIO :: Sem '[Lift IO] [User]
+usersIO :: Sem '[Embed IO] [User]
 usersIO = runHackageIO getUsers
 
 -- servant-client

@@ -81,11 +81,12 @@ getS3EventPair' mgr url = case getFS3Event of
 data CustomException = FreeException | PureException
   deriving (Eq, Exception, Show)
 
+
 -- https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html#runtimes-api-initerror
-
---REQUEST_ID=156cb537-e2d4-11e8-9b34-d36013741fb9
+--
+-- REQUEST_ID=156cb537-e2d4-11e8-9b34-d36013741fb9
 -- curl -X POST  "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response"  -d "SUCCESS"
-
+--
 -- REQUEST_ID=156cb537-e2d4-11e8-9b34-d36013741fb9
 -- ERROR="{\"errorMessage\" : \"Error parsing event data.\", \"errorType\" : \"InvalidEventDataException\"}"
 -- curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/error" -d "$ERROR" --header "Lambda-Runtime-Function-Error-Type: Unhandled"
