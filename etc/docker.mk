@@ -6,7 +6,7 @@ export PATH = ${HOME}/.cabal/bin:${HOME}/.ghcup/bin:/usr/local/bin:/usr/bin:/bin
 export BOOTSTRAP_HASKELL_NONINTERACTIVE = true
 export GHC_VERSION = 8.6.5
 
-init: install-ghcup-deps install-ghcup install-ghc install-pkgs ## install projects dependencies
+init: install-ghcup-deps install-ghcup install-ghc cabal-update install-pkgs ## install projects dependencies
 
 install-ghcup-deps: ## install ghcup dependencies
 	apt-get update -y
@@ -19,12 +19,16 @@ install-ghc: ## install ghc
 	ghcup install $(GHC_VERSION)
 	ghcup set $(GHC_VERSION)
 
+install-pkgs: BINS = ghcid hlint fswatcher
 install-pkgs: ## install hackage binaries
+	for i in $(BINS); do cabal v2-install --overwrite-policy=always $$i; done
+
+cabal-update: BINUP = ~/.ghcup/bin
+cabal-update: ## cabal update
+	ghcup set $(GHC_VERSION)
 	ghcup install-cabal
-	cabal new-install --overwrite-policy=always Cabal cabal-install
-	cabal new-update
-	cabal new-install --overwrite-policy=always fswatcher
-	cabal new-install --overwrite-policy=always hlint
+	cabal v2-install Cabal cabal-install
+	cabal v2-update
 
 cabal-config: ## user cabal config
 	cabal user-config update

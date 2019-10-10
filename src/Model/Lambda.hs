@@ -10,6 +10,7 @@ import Network.HTTP.Client
 import Polysemy
 import Polysemy.Reader
 import Servant.Client
+import Util
 import qualified Network.Aws as Aws
 
 data Lambda m a where
@@ -24,27 +25,27 @@ makeSem ''Lambda
 lambdaToIO :: Members '[Reader BaseUrl, Reader Manager, Log, Embed IO] r => Sem (Lambda ': r) a -> Sem r a
 lambdaToIO = interpret $ \case
   GetS3Event -> do
-    logStderr "- GetS3Event"
     url <- ask @BaseUrl
     mgr <- ask @Manager
+    logStderr $ "- GetS3Event: url=" <> showt url
     embed $ Aws.getS3Event' mgr url
   GetS3EventPair -> do
-    logStderr "- GetS3EventPair"
     url <- ask @BaseUrl
     mgr <- ask @Manager
+    logStderr $ "- GetS3EventPair: url=" <> showt url
     embed $ Aws.getS3EventPair mgr url
   AckEvent eid -> do
-    logStderr $ "- AckEvent"
     url <- ask @BaseUrl
     mgr <- ask @Manager
+    logStderr $ "- AckEvent: url=" <> showt url
     embed $ Aws.ackEvent' mgr url eid
   AckError eid -> do
-    logStderr $ "- AckError"
     url <- ask @BaseUrl
     mgr <- ask @Manager
+    logStderr $ "- AckError: eid=" <> showt eid
     embed $ Aws.ackError' mgr url eid
   InitError err -> do
-    logStderr $ "- InitError" <> (pack . show) err
+    logStderr $ "- InitError: err=" <> showt err
     url <- ask @BaseUrl
     mgr <- ask @Manager
     embed $ Aws.initError' mgr url

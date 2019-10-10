@@ -1,4 +1,4 @@
-module Model.Tty where
+module Model.Eg.Tty where
 
 import Prelude
 import Polysemy

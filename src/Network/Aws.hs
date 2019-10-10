@@ -1,6 +1,7 @@
 module Network.Aws where
 
 import Data.CaseInsensitive hiding (map)
+import Control.Exception
 import Control.Monad.Free
 import Data.CaseInsensitive as CI hiding (map)
 import Data.Foldable (toList)
@@ -10,7 +11,7 @@ import Data.Text hiding (map)
 import Data.Text.Encoding (decodeUtf8)
 import Event.Event
 import Event.S3
-import Network.HTTP.Client (Manager)
+import Network.HTTP.Client (HttpException(..), Manager)
 import Network.HTTP.Types (Header)
 import Servant.API hiding (Header)
 import Servant.Client
@@ -63,17 +64,22 @@ getS3EventPair mgr url = getS3EventPair' mgr url >>= \case
 -- NB: there must be an easier way
 getS3EventPair' :: Manager -> BaseUrl -> IO (Either (ClientError, Seq Header) (S3Event, Seq Header))
 getS3EventPair' mgr url = case getFS3Event of
-  Pure r -> error $ "should not happen: r=" <> show r
+  Pure evt -> pure $ Right (evt, Empty) -- does this make sense?
   Free (F.Throw err) -> pure $ Left (err, Empty)
   Free (F.RunRequest req k) -> do
     let req' = I.requestToClientRequest url req
-    res' <- HTTP.httpLbs req' mgr
-    let res = I.clientResponseToResponse id res'
-        hdrs = responseHeaders res
-    case k res of
-      Pure evt -> pure $ Right (evt, hdrs)
-      Free (F.Throw err) -> pure $ Left (err, hdrs)
-      Free (F.RunRequest _ _) -> error $ "should not happen"
+    try (HTTP.httpLbs req' mgr) >>= \case
+      Left (e :: HttpException) -> pure $ Left (ConnectionError (SomeException e), Empty)
+      Right res' -> do
+        let res = I.clientResponseToResponse id res'
+            hdrs = responseHeaders res
+        case k res of
+          Pure evt -> pure $ Right (evt, hdrs)
+          Free (F.Throw e) -> pure $ Left (e, hdrs)
+          Free (F.RunRequest _ _) -> pure $ Left (ConnectionError (SomeException FreeException), Empty)
+
+data CustomException = FreeException | PureException
+  deriving (Eq, Exception, Show)
 
 -- https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html#runtimes-api-initerror
 

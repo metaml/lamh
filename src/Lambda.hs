@@ -1,31 +1,33 @@
 module Lambda where
 
 import Prelude hiding (log, lookup)
+import Control.Monad
+import Control.Exception hiding (catch, throw)
 import Data.CaseInsensitive (CI, mk)
-import Data.Text (pack)
-import Event.Event hiding (Error)
 import Data.HashMap.Strict (lookup)
 import Data.List.Split
 import Data.Text hiding (splitOn)
-import Control.Exception hiding (catch, throw)
+import Event.Event hiding (Error)
+import Model.Env
+import Model.Lambda
+import Model.Log
 import Network.HTTP.Client
 import Polysemy
 import Polysemy.Error
 import Polysemy.Reader
-import Model.Env
-import Model.Lambda
-import Model.Log
 import Servant.Client (BaseUrl(..), Scheme(..))
 import System.Environment
+import Util
 
-main' :: IO ()
-main' = do
-  hostport <- getEnv "AWS_LAMBDA_RUNTIME_API"
+run :: IO ()
+run = do
   manager <- newManager defaultManagerSettings
+  hostport <- getEnv "AWS_LAMBDA_RUNTIME_API"
   let ps = splitOn ":" hostport
-      (hostname, port') = (ps !! 0, read (ps !! 0) :: Int)
+      (hostname, port') = (ps !! 0, read (ps !! 1) :: Int)
       baseUrl = BaseUrl Http hostname port' ""
-  runM . logToIO . runReader manager . runReader baseUrl $ echoEventIO
+  forever $
+    runM . logToIO . runReader manager . runReader baseUrl $ echoEventIO
 
 echoEventIO :: Sem '[Reader BaseUrl, Reader Manager, Log, Embed IO] ()
 echoEventIO = do
@@ -77,6 +79,3 @@ lambdaRuntimeAwsRequestId = mk "Lambda-Runtime-Aws-Request-Id"
 
 lambdaRuntimeTraceId :: CI Text
 lambdaRuntimeTraceId = mk "Lambda-Runtime-Trace-Id"
-
-showt :: Show a => a -> Text
-showt = pack . show

@@ -1,33 +1,35 @@
 .DEFAULT_GOAL = help
 
 PROJECT = $(shell dirname ${PWD})
-VERSION := polysemy-$(shell date +%s)
+VERSION := $(shell date +%s)
 
 AWS_CFN_STACKS ?= ${HOME}/proj/aws-cfn-stacks
-LAMBDA = aws-cfn-app-deli-test-s3-dev-bucket-lambda
+CF = aws-cfn-app-deli-test-s3-dev-bucket-lambda
+LAMBDA = lamh
+ACTION ?= update
 
 lambda-dev: ## deploy to dev's s3 bucket
-lambda-dev: URL = s3://earnest-lambda-code-dev-us-east-1/s3-lambda/
+lambda-dev: URL = s3://earnest-lambda-code-dev-us-east-1/test-lambda/
 lambda-dev: export AWS_PROFILE = development
 lambda-dev: clean lambda s3-cp
-	$(AWS_CFN_STACKS)/bin/deli-cf update $(LAMBDA) --param version:$(VERSION)
+	$(AWS_CFN_STACKS)/bin/deli-cf ${ACTION} $(CF) --param version:$(VERSION)
 
 lambda-prod: ## deploy to prod's s3 bucket
-lambda-prod: URL = s3://earnest-lambda-code-us-east-1/s3-lambda/
+lambda-prod: URL = s3://earnest-lambda-code-us-east-1/test-lambda/
 lambda-prod: export AWS_PROFILE = production
 lambda-prod: clean lambda s3-cp
-	echo noop: $(AWS_CFN_STACKS)/bin/deli-cf update $(LAMBDA) --param version:$(VERSION)
+	echo noop: $(AWS_CFN_STACKS)/bin/deli-cf update $(CF) --param version:$(VERSION)
 
-lambda: ## zip lambda (linux-binary) in <lamha>/deploy
+lambda: ## zip lambda (linux-binary) in <$(LAMBDA)>/deploy
 	docker run --rm --interactive --tty --volume $(PROJECT):/proj --volume $(PROJECT)/deploy:/root --workdir /proj ghc make zip
 
-zip: clean ## build and zip lambda function: lamha
+zip: clean ## build and zip lambda function: $(LAMBDA)
 	[ "$(shell uname -s)" = "Linux" ] || ( echo "error: must be linux" && exit 1 )
-	cabal new-configure --prefix=deploy/bootstrap --disable-executable-dynamic
-	cabal new-build
-	cabal new-install --overwrite-policy=always exe:lamha
-	strip /root/.cabal/bin/lamha
-	cp /root/.cabal/bin/lamha deploy/bootstrap
+	cabal v2-configure --prefix=deploy/bootstrap --disable-executable-dynamic
+	cabal v2-build
+	cabal v2-install --overwrite-policy=always exe:$(LAMBDA)
+	strip /root/.cabal/bin/$(LAMBDA)
+	cp /root/.cabal/bin/$(LAMBDA) deploy/bootstrap
 	cd deploy && zip s3-lambda.zip bootstrap && rm -f bootstrap
 
 s3-cp: ## copy zip to s3
