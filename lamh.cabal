@@ -15,13 +15,13 @@ library
                     , Event.Kinesis
                     , Event.S3
                     , Event.Sns
-                    , Lambda
                     , Network.Aws
                     , Model.Env
                     , Model.Lambda
                     , Model.Log
                     , Model.Eg.ExcLogTty
                     , Model.Eg.Hackage
+                    , Model.Eg.EchoEvent
                     , Model.Eg.Tty
                     , Util
   hs-source-dirs:     src

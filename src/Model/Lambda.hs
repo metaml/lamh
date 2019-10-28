@@ -17,7 +17,7 @@ data Lambda m a where
   GetS3Event :: Lambda m (Either ClientError S3Event)
   GetS3EventPair :: Lambda m (Either (ClientError, HashMap (CI Text) Text)  (S3Event, HashMap (CI Text) Text))
   AckEvent :: EventId -> Lambda m (Either ClientError Success)
-  AckError :: EventId -> Lambda m (Either ClientError Success)
+  AckError :: EventId -> Error -> Lambda m (Either ClientError Success)
   InitError :: Error -> Lambda m (Either ClientError Success)
 
 makeSem ''Lambda
@@ -39,11 +39,11 @@ lambdaToIO = interpret $ \case
     mgr <- ask @Manager
     logStderr $ "- AckEvent: url=" <> showt url
     embed $ Aws.ackEvent' mgr url eid
-  AckError eid -> do
+  AckError eid err -> do
     url <- ask @BaseUrl
     mgr <- ask @Manager
     logStderr $ "- AckError: eid=" <> showt eid
-    embed $ Aws.ackError' mgr url eid
+    embed $ Aws.ackError' mgr url eid err
   InitError err -> do
     logStderr $ "- InitError: err=" <> showt err
     url <- ask @BaseUrl

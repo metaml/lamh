@@ -6,9 +6,9 @@ VERSION := $(shell date +%s)
 AWS_CFN_STACKS ?= ${HOME}/proj/aws-cfn-stacks
 CF = aws-cfn-app-deli-test-s3-dev-bucket-lambda
 LAMBDA = lamh
-ACTION ?= update
 
 lambda-dev: ## deploy to dev's s3 bucket
+lambda-dev: ACTION ?= update
 lambda-dev: URL = s3://earnest-lambda-code-dev-us-east-1/test-lambda/
 lambda-dev: export AWS_PROFILE = development
 lambda-dev: clean lambda s3-cp

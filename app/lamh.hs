@@ -1,6 +1,6 @@
 module Main where
 
-import Lambda
+import Model.Eg.EchoEvent
 
 main :: IO ()
 main = run

@@ -52,6 +52,7 @@ init: ## initialize project
 
 # @todo: not indempotent--fix later
 update: ## update project depedencies
+	${MAKE} -f etc/init.mk cabal-update
 	${MAKE} -f etc/init.mk install-pkgs
 
 lambda-dev: ## deploy to s3 bucket in development
