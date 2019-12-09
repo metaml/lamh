@@ -17,11 +17,12 @@ library
                     , Event.Sns
                     , Network.Aws
                     , Model.Env
+                    , Model.Event
                     , Model.Lambda
                     , Model.Log
+                    , Model.Eg.EchoEvent
                     , Model.Eg.ExcLogTty
                     , Model.Eg.Hackage
-                    , Model.Eg.EchoEvent
                     , Model.Eg.Tty
                     , Util
   hs-source-dirs:     src
@@ -58,12 +59,13 @@ library
                     , either
                     , errors
                     , free
+                    , generic-lens
                     , http-client
                     , http-media
                     , http-types
-                    , generic-lens
                     , polysemy
                     , polysemy-plugin
+                    , selective
                     , servant
                     , servant-client
                     , servant-client-core

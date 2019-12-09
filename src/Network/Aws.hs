@@ -7,10 +7,10 @@ import Data.CaseInsensitive as CI hiding (map)
 import Data.Foldable (toList)
 import Data.Proxy
 import Data.Sequence
-import Data.Text hiding (map)
 import Data.Text.Encoding (decodeUtf8)
 import Event.Event
 import Event.S3
+import Model.Event
 import Network.HTTP.Client (HttpException(..), Manager)
 import Network.HTTP.Types (Header)
 import Servant.API hiding (Header)
@@ -54,10 +54,10 @@ api' = Proxy
 getFS3Event :: Free F.ClientF S3Event
 getFS3Event = F.client api'
 
-getS3EventPair :: Manager -> BaseUrl -> IO (Either (ClientError, H.HashMap (CI Text) Text) (S3Event, H.HashMap (CI Text) Text))
+getS3EventPair :: Manager -> BaseUrl -> IO (Either ClientError' S3Event')
 getS3EventPair mgr url = getS3EventPair' mgr url >>= \case
-  Left (err, hs) -> pure $ Left (err, hmap hs)
-  Right (evt, hs) -> pure $ Right (evt, hmap hs)
+  Left (err, hs) -> pure $ Left $ ClientError' err (hmap hs)
+  Right (evt, hs) -> pure $ Right $ S3Event' evt (hmap hs)
   where
     hmap hs = H.fromList $ map (\(x, y) -> (CI.mk . decodeUtf8 $ original x, decodeUtf8 y)) $ toList hs
 

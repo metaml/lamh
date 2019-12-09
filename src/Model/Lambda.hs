@@ -1,10 +1,9 @@
 module Model.Lambda where
 
-import Data.CaseInsensitive
-import Data.HashMap.Strict
 import Data.Text
 import Event.Event
 import Event.S3
+import Model.Event
 import Model.Log
 import Network.HTTP.Client
 import Polysemy
@@ -13,9 +12,12 @@ import Servant.Client
 import Util
 import qualified Network.Aws as Aws
 
+type Key = Text
+type Header = Text
+
 data Lambda m a where
   GetS3Event :: Lambda m (Either ClientError S3Event)
-  GetS3EventPair :: Lambda m (Either (ClientError, HashMap (CI Text) Text)  (S3Event, HashMap (CI Text) Text))
+  GetS3EventPair :: Lambda m (Either ClientError' S3Event')
   AckEvent :: EventId -> Lambda m (Either ClientError Success)
   AckError :: EventId -> Error -> Lambda m (Either ClientError Success)
   InitError :: Error -> Lambda m (Either ClientError Success)

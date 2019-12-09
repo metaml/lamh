@@ -4,6 +4,8 @@ import Prelude hiding (log, lookup)
 import Control.Monad
 import Control.Exception hiding (catch, throw)
 import Data.CaseInsensitive (CI, mk)
+import Data.Generics.Internal.VL.Lens
+import Data.Generics.Product.Fields
 import Data.HashMap.Strict (lookup)
 import Data.List.Split
 import Data.Text hiding (splitOn)
@@ -42,38 +44,39 @@ echoEvent = catch @SomeException echo err
   where
     echo = do
       getS3EventPair >>= \case
-        Left r@(err', hmap) -> do
-          logStderr $ "Left getS3EventPair r==" <> showt r
-          let traceId = lookup lambdaRuntimeTraceId hmap
-          case traceId of
+        Left err' -> do
+          logStderr $ "Left getS3EventPair r==" <> showt err'
+          case lookup lambdaRuntimeTraceId (err' ^. field @"header") of
             Just tid -> setEnv "_X_AMZN_TRACE_ID" (show tid)
             Nothing -> logStderr $ "- (Left) no "
                                    <> showt lambdaRuntimeTraceId
                                    <> ": "
-                                   <> showt r
-          case lookup lambdaRuntimeAwsRequestId hmap of
-            Just reqId -> ackError (EventId reqId) (toError err') >>= \r' -> logStderr $ "ackError response=" <> showt r'
+                                   <> showt err'
+          case lookup lambdaRuntimeAwsRequestId (err' ^. field @"header") of
+            Just reqId -> ackError (EventId reqId) (toError $ err' ^. field @"error")
+                          >>= \r' -> logStderr $ "ackError response=" <> showt r'
             Nothing -> do
               logStderr $ "- AckEvent-- no "
                           <> showt lambdaRuntimeAwsRequestId
                           <> ": "
-                          <> showt r
-              initError (toError err') >>= \r' -> logStderr $ "ackEvent response=" <> showt r'
-        Right r@(_, hmap) -> do
-          logStderr $ "Right getS3EventPair r=" <> showt r
-          let traceId = lookup lambdaRuntimeTraceId hmap
-          case traceId of
+                          <> showt err'
+              initError (toError $ err' ^. field @"error") >>= \r' -> logStderr $ "ackEvent response=" <> showt r'
+        Right evt -> do
+          logStderr $ "Right getS3EventPair r=" <> showt evt
+          case lookup lambdaRuntimeTraceId (evt ^. field @"header") of
             Just tid -> setEnv "_X_AMZN_TRACE_ID" (show tid)
             Nothing -> logStderr $ "- (Right) no "
                                    <> showt lambdaRuntimeTraceId
                                    <> ": "
-                                   <> showt r
-          case lookup lambdaRuntimeAwsRequestId hmap of
-            Just reqId -> ackEvent (EventId reqId) >>= \r' -> logStderr $ "ackEvent response=" <> showt r'
+                                   <> showt evt
+          case lookup lambdaRuntimeAwsRequestId (evt ^. field @"header") of
+            Just reqId -> ackEvent (EventId reqId)
+                          >>= \r' -> logStderr $ "ackEvent response=" <> showt r'
             Nothing -> logStderr $ "- AckEvent-- no "
                                    <> showt lambdaRuntimeAwsRequestId
                                    <> ": "
-                                   <> showt r
+                                   <> showt evt
+          logStderr $ "Right getS3EventPair r=" <> showt evt
     err = \e -> initError (Error "Exception" (showt e)) >>= \r -> logStderr $ "initError response=" <> showt r
 
 lambdaRuntimeAwsRequestId :: CI Text
