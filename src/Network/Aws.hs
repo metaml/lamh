@@ -67,7 +67,7 @@ getS3EventPair' mgr url = case getFS3Event of
   Pure evt -> pure $ Right (evt, Empty) -- does this make sense?
   Free (F.Throw err) -> pure $ Left (err, Empty)
   Free (F.RunRequest req k) -> do
-    let req' = I.requestToClientRequest url req
+    let req' = I.defaultMakeClientRequest url req
     try (HTTP.httpLbs req' mgr) >>= \case
       Left (e :: HttpException) -> pure $ Left (ConnectionError (SomeException e), Empty)
       Right res' -> do
