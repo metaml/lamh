@@ -2,23 +2,24 @@
 let
   pkgs = import nixpkgs {};
   hkg = pkgs.haskellPackages;
-  ghc = hkg.ghcWithPackages (hpkgs: with hpkgs; [ ghcide
-                                                  cabal-install
-                                                  zlib
-                                                ]
-                            );
+  ghc = hkg.ghcWithPackages (hpkgs: with hpkgs;
+          [ ghcide
+            cabal-install
+            zlib
+          ]
+        );
 in
   with pkgs;
-  mkShell {
-    buildInputs = [ binutils
-                    ghc
-                    git
-                    gnumake
-                    gnumake
-                    hkg.fswatcher
-                    hkg.ghcid
-                    hkg.hlint
-                    less
-                    sourceHighlight
-                  ];
+  mkShell { buildInputs =
+    [ binutils
+      ghc
+      git
+      gnumake
+      gnumake
+      hkg.fswatcher
+      hkg.ghcid
+      hkg.hlint
+      less
+      sourceHighlight
+    ];
   }
