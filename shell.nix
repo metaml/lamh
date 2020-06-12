@@ -1,24 +1,26 @@
-{ nixpkgs ? import <nixpkgs> {} }:
+{ nixpkgs ? import ./nix/nix.nix }:
 let
-  inherit (nixpkgs) pkgs;
-  inherit (pkgs) haskellPackages;
+  pkgs = import nixpkgs {};
+  hkgs = pkgs.haskellPackages;
+  ghc = pkgs.haskellPackages.ghcWithPackages (hpkgs: with hpkgs; [
+    cabal-install
+    zlib
+  ]);
 
-  haskellDeps = ps: with ps; [];
-  ghc = haskellPackages.ghcWithPackages haskellDeps;
-
-  packages = [
-    pkgs.ghc
-    pkgs.binutils
-    pkgs.gnumake
-    pkgs.sourceHighlight
-    pkgs.zlib
-    haskellPackages.cabal-install
-    haskellPackages.ghcid
-    haskellPackages.fswatcher
-    haskellPackages.hlint
-  ];
 in
-  pkgs.stdenv.mkDerivation {
-    name = "env";
-    buildInputs = packages;
+  with pkgs;
+
+  mkShell {
+    buildInputs = [
+      binutils
+      git
+      gnumake
+      gnumake
+      hkgs.fswatcher
+      hkgs.ghc
+      hkgs.ghcid
+      hkgs.hlint
+      less
+      sourceHighlight
+    ];
   }

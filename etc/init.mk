@@ -3,9 +3,21 @@
 # called from top level Makefile
 # include etc/nix.mk
 
-init: nix ## initialize project
+# unstable or 20.03
+NIXV = unstable
 
-nix: ## nix
+init: utils ## initialize project
+	-@[ "$(NIXV)" = "unstable" ] && nix-prefetch-git https://github.com/nixos/nixpkgs-channels.git refs/heads/nixpkgs-$(NIXV) > nix/nix.json
+	-@[ "$(NIXV)" = "20.03" ] && nix-prefetch-git https://github.com/nixos/nixpkgs-channels.git refs/heads/nixos-$(NIXV) > nix/nix.json
+	nix-shell --run "cabal install fswatcher"
+
+nix-shell: ## nix-shell
+	nix-shell --pure shell.nix
+
+utils: ## install utilities
+	nix-env --install nix-prefetch-git
+
+install-nix: ## install nix--run this target first
 	curl -L https://nixos.org/nix/install | sh
 
 cabal-update: ## cabal update

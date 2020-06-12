@@ -1,7 +1,3 @@
-# Set up the per-user profile.
-# This part should be kept in sync with nixpkgs:nixos/modules/programs/shell.nix
-NIX_LINK = ${HOME}/.nix-profile
-
 NIX_SSL_CERT_FILE_SH = \
   if [ -e /etc/ssl/certs/ca-certificates.crt ]; then \
     echo -n /etc/ssl/certs/ca-certificates.crt; \
@@ -11,17 +7,9 @@ NIX_SSL_CERT_FILE_SH = \
     echo -n /etc/ssl/certs/ca-bundle.crt; \
   elif [ -e /etc/pki/tls/certs/ca-bundle.crt ]; then \
     echo -n /etc/pki/tls/certs/ca-bundle.crt; \
-  elif [ -e $(NIX_LINK)/etc/ssl/certs/ca-bundle.crt ]; then \
-    echo -n $(NIX_LINK)/etc/ssl/certs/ca-bundle.crt; \
-  elif [ -e $(NIX_LINK)/etc/ca-bundle.crt ]; then \
-    echo -n $(NIX_LINK)/etc/ca-bundle.crt; fi
-
+ fi
 export NIX_SSL_CERT_FILE = $(shell $(NIX_CERT_FILE_SH))
-# Append ~/.nix-defexpr/channels to $NIX_PATH so that <nixpkgs>
-# paths work when the user has fetched the Nixpkgs channel.
-#  export NIX_PATH=${NIX_PATH:+$NIX_PATH:}$HOME/.nix-defexpr/channels
+# @todo: remove these later
 export NIX_PATH = ${HOME}/.nix-defexpr/channels
-# Set up environment.
-# This part should be kept in sync with nixpkgs:nixos/modules/programs/environment.nix
 export NIX_PROFILES = "/nix/var/nix/profiles/default ${HOME}/.nix-profile"
-export PATH = $(NIX_LINK)/bin
+export PATH = $(HOME)/.nix-profile/bin:/usr/bin
