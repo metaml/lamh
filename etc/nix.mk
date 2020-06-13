@@ -9,6 +9,7 @@ NIX_SSL_CERT_FILE_SH = \
     echo -n /etc/pki/tls/certs/ca-bundle.crt; \
  fi
 export NIX_SSL_CERT_FILE = $(shell $(NIX_CERT_FILE_SH))
+
 # @todo: remove these later
 export NIX_PATH = ${HOME}/.nix-defexpr/channels
 export NIX_PROFILES = "/nix/var/nix/profiles/default ${HOME}/.nix-profile"

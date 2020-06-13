@@ -1,11 +1,12 @@
+# stolen from https://discourse.nixos.org/t/nix-haskell-development-2020/6170
 let
-  hostNix = import <nixpkgs> {};
-  nixpkgsPin = hostNix.pkgs.lib.importJSON ./nix.json;
+  nix = import <nixpkgs> {};
+  nixpin = nix.pkgs.lib.importJSON ./nix.json;
 
-  pinnedPkgs = hostNix.pkgs.fetchFromGitHub {
+  nixpinned = nix.pkgs.fetchFromGitHub {
     owner = "NixOS";
     repo  = "nixpkgs-channels";
-    inherit (nixpkgsPin) rev sha256;
+    inherit (nixpin) rev sha256;
   };
 in
-  pinnedPkgs
+  nixpinned

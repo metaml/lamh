@@ -1,7 +1,7 @@
 .DEFAULT_GOAL = help
 
 # called from top level Makefile
-# include etc/nix.mk
+include etc/nix.mk
 
 # unstable or 20.03
 NIXV = unstable
