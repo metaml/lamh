@@ -2,41 +2,39 @@
 
 export SHELL := /bin/bash
 
-#include etc/nix.mk
-
-export PATH := $(PATH)
+include etc/nix.mk
 
 OPT =
 BIN ?= lamh
 
 dev: clean ## build continuously
-	@cabal v2-build 2>&1 | source-highlight --src-lang=haskell --out-format=esc
-	@fswatcher --path . --include "\.hs$$|\.cabal$$" --throttle 31 cabal -- $(OPT) v2-build 2>&1 \
+	@cabal build 2>&1 | source-highlight --src-lang=haskell --out-format=esc
+	@fswatcher --path . --include "\.hs$$|\.cabal$$" --throttle 31 cabal -- $(OPT) build 2>&1 \
 	| source-highlight --src-lang=haskell --out-format=esc
 
 dev-ghcid: clean ## build continuously using ghcid
-	@ghcid --command="cabal $(OPTS) v2-repl -fwarn-unused-binds -fwarn-unused-imports -fwarn-orphans" \
+	@ghcid --command="cabal $(OPTS) repl -fwarn-unused-binds -fwarn-unused-imports -fwarn-orphans" \
 	       --reload=app/lamh.hs \
 	       --restart=lamh.cabal \
 	| source-highlight --src-lang=haskell --out-format=esc
 
 build: clean # lint (breaks on multiple readers) ## build
-	cabal $(OPT) v2-build --jobs='$$ncpus' | source-highlight --src-lang=haskell --out-format=esc
+	cabal $(OPT) build --jobs='$$ncpus' | source-highlight --src-lang=haskell --out-format=esc
 
 test: ## test
-	cabal $(OPT) v2-test
+	cabal $(OPT) test
 
 lint: ## lint
 	hlint app src
 
 clean: ## clean
-	cabal $(OPT) v2-clean
+	cabal $(OPT) clean
 
 run: ## run main, default: BIN=lamh
-	cabal $(OPT) v2-run ${BIN}
+	cabal $(OPT) run ${BIN}
 
 repl: ## repl
-	cabal $(OPT) v2-repl
+	cabal $(OPT) repl
 
 help: ## help
 	-@grep --extended-regexp '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -49,7 +47,7 @@ help: ## help
 	-@echo BIN=$(BIN)
 
 # @todo: not indempotent--fix later
-init: ## init project but run "make install-nix" first
+init: ## init or update project but run "make install-nix" first
 	${MAKE} -f etc/init.mk init
 
 install-nix: # install nix
@@ -74,3 +72,7 @@ trigger-dev: ## trigger lambda in dev
 
 zip: ## build and zip lambda function
 	${MAKE} -f etc/deploy.mk $@
+
+curl: ## curl --head https://google.com
+	echo $(NIX_SSL_CERT_FILE)
+	curl --head https://google.com/

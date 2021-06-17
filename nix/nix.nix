@@ -5,7 +5,7 @@ let
 
   nixpinned = nix.pkgs.fetchFromGitHub {
     owner = "NixOS";
-    repo  = "nixpkgs-channels";
+    repo  = "nixpkgs";
     inherit (nixpin) rev sha256;
   };
 in

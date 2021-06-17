@@ -10,9 +10,9 @@ in
   with pkgs;
   mkShell {
     buildInputs = [ binutils
+                    curl
                     ghc
                     git
-                    gnumake
                     gnumake
                     hkg.fswatcher
                     hkg.ghcid

@@ -1,14 +1,14 @@
 .DEFAULT_GOAL = help
 
 # called from top level Makefile
-include etc/nix.mk
+# include etc/nix.mk
 
-# unstable or 20.03
-NIXV = unstable
+# unstable or 21.05
+VERSION = 21.05
 
 init: utils ## initialize project
-	-@[ "$(NIXV)" = "unstable" ] && nix-prefetch-git https://github.com/nixos/nixpkgs-channels.git refs/heads/nixpkgs-$(NIXV) > nix/nix.json
-	-@[ "$(NIXV)" = "20.03" ] && nix-prefetch-git https://github.com/nixos/nixpkgs-channels.git refs/heads/nixos-$(NIXV) > nix/nix.json
+	-@[ "$(NIXV)" = "unstable" ] && nix-prefetch-git https://github.com/nixos/nixpkgs.git refs/heads/nixpkgs-$(VERSION) > nix/nix.json
+	-@[ "$(NIXV)" = "20.03" ] && nix-prefetch-git https://github.com/nixos/nixpkgs.git refs/heads/nixos-$(VERSION) > nix/nix.json
 	nix-shell --run "cabal install fswatcher"
 
 nix-shell: ## nix-shell
@@ -18,7 +18,9 @@ utils: ## install utilities
 	nix-env --install nix-prefetch-git
 
 install-nix: ## install nix--run this target first
-	curl -L https://nixos.org/nix/install | sh
+	curl --output /tmp/install https://nixos.org/nix/install
+	chmod +x  /tmp/install
+	/tmp/install --darwin-use-unencrypted-nix-store-volume
 
 cabal-update: ## cabal update
 	cabal v2-update
